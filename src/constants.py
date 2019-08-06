@@ -5,3 +5,5 @@ DISCOURSE_CREDENTIALS = {
     'api_username': 'flipbot',
     'host': 'https://forum.flipdot.org'
 }
+
+CELERY_BROKER = os.getenv('REDIS_HOST', 'redis://localhost')

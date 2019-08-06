@@ -6,7 +6,7 @@ Plenum: 16:00
 Putzen: 17:00
 Pizza: 18:00
 
-Wir sammeln uns gedanklich auf dem [Pad](https://pad.freifunk-kassel.de/p/fd-plenum-{{ plenum_date.strftime('%Y-%m-%d') }}). Später wird dieser Thread gesperrt und mit dem Ergebnisprotokoll versehen.
+Wir sammeln uns gedanklich auf dem [Pad](https://pad.freifunk-kassel.de/p/fd-plenum-{{ plenum_date.strftime('%Y-%m-%d') }}). Später wird dieser Thread mit dem Ergebnisprotokoll versehen.
 
 # Ergebnisprotokoll
 
