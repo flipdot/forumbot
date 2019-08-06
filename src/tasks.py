@@ -31,6 +31,5 @@ def announce_plenum(client: DiscourseClient):
     post_content = render('plenum.md', plenum_date=plenum_date)
 
     # Category 23 == 'orga/plena'. But we must use the id here. D'oh!
-    # TODO: uncomment me
-    # res = client.create_post(post_content, category_id=23, title=title)
+    client.create_post(post_content, category_id=23, title=title)
     logging.info(f'Topic "{title}" created.')

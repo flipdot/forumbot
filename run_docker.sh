@@ -1,0 +1,1 @@
+docker run -it --rm -e DISCOURSE_API_KEY=$DISCOURSE_API_KEY flipdot/forumbot
