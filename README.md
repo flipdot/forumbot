@@ -4,6 +4,12 @@
 
     docker run -d -e DISCOURSE_API_KEY=fefe flipdot/forumbot
 
+## Deployment
+
+The python script is running on a pi (without docker). When the pi boots, it
+will pull this repo, execute `pip install -r requirements.txt` and starts
+`app.py`. You just need to repower the correct pi in the space ;)
+
 ## Developing
 
 ### Running
