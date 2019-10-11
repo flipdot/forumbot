@@ -4,7 +4,6 @@ Wir wollen am {{ plenum_date.strftime('%A, den **%x**') }} plenieren. Bitte lies
 
 Plenum: 18:00
 Putzen: 19:00
-Pizza: 20:00
 
 Wir sammeln uns gedanklich auf dem [Pad](https://pad.freifunk-kassel.de/p/fd-plenum-{{ plenum_date.strftime('%Y-%m-%d') }}). Später wird dieser Thread mit dem Ergebnisprotokoll versehen.
 
