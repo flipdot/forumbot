@@ -23,6 +23,11 @@ Or, if you want to develop without docker:
 
     pip install -r requirements.txt
     DISCOURSE_API_KEY=fefe python src/app.py
+    
+Execute tests:
+
+    pip install nose
+    nosetests tests
 
 ### How to add a job?
 
