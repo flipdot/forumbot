@@ -33,6 +33,9 @@ class TestTopicExists(unittest.TestCase):
         """
         self.assertTrue(utils.topic_exists('2019-08-04 plenum', self.topics))
         self.assertTrue(utils.topic_exists('2019-09-08 PLENUM', self.topics))
+        self.assertTrue(utils.topic_exists('2019-09-08 Plenum', ['2019-09-08 plenum']))
+        self.assertTrue(utils.topic_exists('2019-09-08 Plenum', ['2019-09-08 PLENUM']))
+        self.assertTrue(utils.topic_exists('2019-09-08 Plenum', ['2019-09-08 PlEnUm']))
 
     def test_wrong_day(self):
         """
@@ -41,7 +44,7 @@ class TestTopicExists(unittest.TestCase):
         """
         self.assertTrue(utils.topic_exists('2019-10-06 Plenum', self.topics))
         self.assertTrue(utils.topic_exists('2019-10-06 Plenum', ['2019-10-05 Plenum', '2019-10-27 Plenum']))
-        self.assertFalse(utils.topic_exists('2019-11-01 Plenum', ['2019-10-01 Plenum', '2019-11-30 Plenum']))
+        self.assertFalse(utils.topic_exists('2019-11-01 Plenum', ['2019-10-01 Plenum', '2019-10-30 Plenum']))
         self.assertFalse(utils.topic_exists('2019-10-06 Plenum', ['2018-10-06 Plenum', '2020-10-06 Plenum']))
 
     def test_title_with_garbage(self):
