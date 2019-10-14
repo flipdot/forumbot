@@ -6,7 +6,7 @@ class TestTopicExists(unittest.TestCase):
 
     def setUp(self) -> None:
         self.topics = ['Wie funktioniert ein Plenum?', '2019-11-03 <strike>Plenum</strike> Vollversammlung',
-                       '2019-10-13 Plenum', '2019-10-06 Plenum', '2019-09-08 Plenum', '2019-09-01 Plenum',
+                       '2019-10-13 Plenum', '2019-09-08 Plenum', '2019-09-01 Plenum',
                        '2019-08-04 Plenum', '2019-07-07 Plenum',
                        '[POLL] [BIS 17.2.] Plenum 1x im Monat. Welcher Wochentag?', '2019-06-09 Plenum',
                        '2019-05-05 - Plenum nach VV', 'Ordentliche Vollversammlung 2019 am 5.5.2019 um 16:00',
@@ -23,6 +23,31 @@ class TestTopicExists(unittest.TestCase):
     def test_exact_match(self):
         self.assertTrue(utils.topic_exists('2019-08-04 Plenum', self.topics))
         self.assertTrue(utils.topic_exists('2019-09-08 Plenum', self.topics))
-        self.assertTrue(utils.topic_exists('2019-10-13 Plenum', self.topics))
         # This is in the future, so it should not yet exist
-        self.assertFalse(utils.topic_exists('2019-11-03 Plenum', self.topics))
+        self.assertFalse(utils.topic_exists('2019-12-01 Plenum', self.topics))
+
+    def test_case_sensitivity(self):
+        """
+        Someone posted a plenum announcement, but fucked up the casing.
+        :return:
+        """
+        self.assertTrue(utils.topic_exists('2019-08-04 plenum', self.topics))
+        self.assertTrue(utils.topic_exists('2019-09-08 PLENUM', self.topics))
+
+    def test_wrong_day(self):
+        """
+        A human posted the plenum on another day, but in the same month. Consider the topic as existent.
+        :return:
+        """
+        self.assertTrue(utils.topic_exists('2019-10-06 Plenum', self.topics))
+        self.assertTrue(utils.topic_exists('2019-10-06 Plenum', ['2019-10-05 Plenum', '2019-10-27 Plenum']))
+        self.assertFalse(utils.topic_exists('2019-11-01 Plenum', ['2019-10-01 Plenum', '2019-11-30 Plenum']))
+        self.assertFalse(utils.topic_exists('2019-10-06 Plenum', ['2018-10-06 Plenum', '2020-10-06 Plenum']))
+
+    def test_title_with_garbage(self):
+        """
+        The human did not comply to the usual formatting. Try to be smarter than the human.
+        :return:
+        """
+        self.assertTrue(utils.topic_exists('2019-11-03 Plenum', self.topics))
+        self.assertTrue(utils.topic_exists('2019-11-03 Plenum', ['2019-11-05 Gutes Plenum']))
