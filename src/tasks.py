@@ -1,19 +1,9 @@
 import logging
-from datetime import datetime, timedelta
-from itertools import count
-from typing import Tuple
+from datetime import datetime
 
 from pydiscourse import DiscourseClient
 
-from utils import render
-
-
-def get_next_plenum_date(now: datetime) -> Tuple[datetime, timedelta]:
-    next_days = (now + timedelta(days=i) for i in count())
-    first_sundays = (x for x in next_days if x.weekday() == 6 and x.day <= 7)
-    plenum_date = next(first_sundays)
-    delta = plenum_date - now
-    return plenum_date, delta
+from utils import render, get_next_plenum_date, topic_exists
 
 
 def announce_plenum(client: DiscourseClient) -> None:
@@ -28,7 +18,8 @@ def announce_plenum(client: DiscourseClient) -> None:
     topics = [
         x["title"] for x in client.category_topics("orga/plena")["topic_list"]["topics"]
     ]
-    if title in topics:
+
+    if topic_exists(title, topics):
         logging.info(f'"{title}" was already announced. Aborting.')
         return
 

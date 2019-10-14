@@ -12,8 +12,11 @@ COPY requirements.txt /app/
 
 WORKDIR  /app
 RUN pip install -r requirements.txt
+RUN pip install nose
 
 COPY src /app/src
 COPY templates /app/templates
+
+RUN nosetests tests
 
 CMD python src/app.py
