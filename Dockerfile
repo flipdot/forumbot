@@ -17,6 +17,4 @@ RUN pip install nose
 COPY src /app/src
 COPY templates /app/templates
 
-RUN nosetests tests
-
 CMD python src/app.py
