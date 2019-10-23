@@ -3,7 +3,9 @@
 ## Usage
 
     docker run -d -e DISCOURSE_API_KEY=fefe flipdot/forumbot
-
+    # if you want to run on another discourse instance:
+    docker run -d -e DISCOURSE_API_KEY=fefe -e DISCOURSE_USERNAME=hello -e DISCOURSE_HOST=https://forum.example.com flipdot/forumbot
+    
 ## Deployment
 
 The python script is running on a pi (without docker). When the pi boots, it
@@ -31,15 +33,22 @@ Execute tests:
 
 ### How to add a job?
 
-1. Open `src/tasks.py`. Add a new function
+Start by copying `src/tasks/hello_world.py`. You can run your new task directly:
 
-        def my_awesome_task(client: DiscourseClient):
-            # Do your stuff here.
-            # You can use the client object to interact with discourse
-            pass
+    python src/app.py --dry --run_task hello_world
+    
+...where "hello_world" is the name of the python file.
 
-2. Open `src/app.py`. Schedule your task inside function `schedule_jobs`:
+Modify the `main()` function:
 
-        schedule.every().day.at('13:37').do(tasks.my_awesome_task, client)
+    def main(client: DiscourseClient) -> None:
+        # Do your stuff here.
+        # You can use the client object to interact with discourse
+        pass
 
-   Take a look at [schedule](https://schedule.readthedocs.io/en/stable/) to see how to specify when to run your task.
+Next, open `src/app.py`. Add an `import tasks.my_awesome_task` to the top of the file.
+Schedule your task inside the function `schedule_jobs`:
+
+    schedule.every().day.at('13:37').do(tasks.my_awesome_task.main, client)
+
+Take a look at [schedule](https://schedule.readthedocs.io/en/stable/) to see how to specify when to run your task.
