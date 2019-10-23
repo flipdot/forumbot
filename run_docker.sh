@@ -1,1 +1,5 @@
-docker run -it --rm -e DISCOURSE_API_KEY=$DISCOURSE_API_KEY flipdot/forumbot
+docker run -it --rm \
+  -e DISCOURSE_API_KEY=$DISCOURSE_API_KEY \
+  -e DISCOURSE_USERNAME=$DISCOURSE_USERNAME \
+  -e DISCOURSE_HOST=$DISCOURSE_HOST \
+  flipdot/forumbot
