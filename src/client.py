@@ -53,7 +53,9 @@ class DiscourseStorage:
         if not post_id:
             post_id = self.client.posts(topic_id)['post_stream']['posts'][0]['id']
             self._storage_ids[key] = topic_id, post_id
-        return yaml.safe_load(self.client.single_post(post_id)['raw'])
+        post = self.client.single_post(post_id)
+        assert post['yours'], f'The "STORAGE_{key}" was not created by ourself (post_id: {post_id})'
+        return yaml.safe_load(post['raw'])
 
     def put(self, key, value):
         data = yaml.safe_dump(value)
