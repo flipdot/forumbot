@@ -3,7 +3,7 @@ import logging
 import sys
 from typing import Optional
 
-from pydiscourse import DiscourseClient
+from client import DiscourseClient, DiscourseStorageClient
 from pydiscourse.exceptions import DiscourseClientError
 
 from constants import DISCOURSE_CREDENTIALS
@@ -37,7 +37,7 @@ def disable_request(client: DiscourseClient, disable_verb: Optional[str] = None,
     client._request = new_request_fn
 
 
-def schedule_jobs(client: DiscourseClient) -> None:
+def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at('13:37').do(tasks.announce_plenum.main, client)
 
 
@@ -54,7 +54,7 @@ def main():
 
     args = parser.parse_args()
 
-    client = DiscourseClient(**DISCOURSE_CREDENTIALS)
+    client = DiscourseStorageClient(**DISCOURSE_CREDENTIALS)
     if args.dry:
         disable_request(client, 'POST')
         disable_request(client, 'PUT')
