@@ -1,9 +1,24 @@
 import logging
 import re
 from datetime import datetime, timedelta
-from pprint import pprint
 
+from pydiscourse import DiscourseClient
 from client import DiscourseStorageClient
+
+# custom types
+# TypedDict is only available since python 3.8
+# class VoucherConfigElement(TypedDict):
+#     voucher: str
+#     owner: Optional[str]
+#     message_id: Optional[int]
+#     persons: Optional[int]
+from typing import Dict, List, Optional
+
+from utils import render
+
+VoucherConfigElement = Dict
+
+VoucherConfig = List[VoucherConfigElement]
 
 
 def private_message_handler(client: DiscourseStorageClient, topic, posts) -> None:
@@ -36,8 +51,62 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> Non
             })
 
 
+def get_username(voucher: VoucherConfigElement) -> Optional[str]:
+    owner = voucher['owner']
+    return re.search(r'@([^ ]+)', owner)[1] if owner else None
+
+
+def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
+    username = get_username(voucher)
+    message_content = render('voucher_message.md', voucher=voucher)
+    logging.info(f'Sending voucher to {username}')
+    res = client.create_post(message_content, title='Dein 36C3 Voucher', archetype='private_message',
+                             target_usernames=username)
+    message_id = res.get('topic_id')
+    logging.info(f'Sent, message_id is {message_id}')
+    voucher['message_id'] = message_id
+    voucher['received'] = datetime.now()
+
+
+def send_message_to_user(client: DiscourseClient, voucher: VoucherConfigElement, message: str) -> None:
+    username = get_username(voucher)
+    message_id = voucher.get('message_id')
+    if not message_id:
+        return
+    logging.info(f'Sending message to {username} (Thread {message_id})')
+    client.create_post(message, topic_id=message_id)
+
+
+def check_for_returned_voucher(client: DiscourseClient, voucher: VoucherConfigElement) -> Optional[str]:
+    message_id = voucher['message_id']
+    posts = client.posts(message_id)
+    user_posts = [post for post in posts['post_stream']['posts'] if post['name'] != 'flipbot']
+    user_posts_content = ' '.join([p['cooked'] for p in user_posts])
+    new_voucher = re.search(r'CHAOS[a-zA-Z0-9]+', user_posts_content)
+    if new_voucher:
+        return new_voucher[0]
+
+
 def main(client: DiscourseStorageClient) -> None:
-    client.storage.put('voucher', {})
-    pprint(client.storage.get('voucher'))
-    # This function may come in handy. Just drop your templates into the templates/ directory:
-    # render('plenum.md', my_variable=15)
+    data = client.storage.get('voucher')
+    for voucher in data.get('voucher'):
+        if not voucher['owner']:
+            continue
+        if voucher.get('message_id'):
+            new_voucher_code = check_for_returned_voucher(client, voucher)
+            if new_voucher_code:
+                logging.info(f'Voucher returned by {get_username(voucher)}')
+                send_message_to_user(client, voucher, message=f'Prima, vielen Dank für "{new_voucher_code}"!')
+                voucher['voucher'] = new_voucher_code
+                voucher['owner'] = None
+                voucher['message_id'] = None
+                voucher['persons'] = None
+                voucher['received'] = None
+        else:
+            send_voucher_to_user(client, voucher)
+
+    post_content = render('voucher_table.md', vouchers=data.get('voucher'))
+    # TODO: voucher_table_post_id does not get saved. We need to create a post as soon as we received the voucher list
+    client.update_post(data.get('voucher_table_post_id'), post_content)
+
+    client.storage.put('voucher', data)

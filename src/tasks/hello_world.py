@@ -1,6 +1,7 @@
 import logging
 
 from pydiscourse import DiscourseClient
+from utils import render
 
 
 def main(client: DiscourseClient) -> None:
