@@ -12,6 +12,7 @@ from time import sleep
 import locale
 import schedule
 import tasks.announce_plenum
+import tasks.distribute_voucher
 
 locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 
@@ -37,8 +38,19 @@ def disable_request(client: DiscourseClient, disable_verb: Optional[str] = None,
     client._request = new_request_fn
 
 
+def fetch_unread_messages(client: DiscourseStorageClient):
+    # TODO: Something is still wrong about the unseen thingy. Dunno when it get's set.
+    topics = [t for t in client.private_messages()['topic_list']['topics'] if t['unseen']]
+    for topic in topics:
+        posts = client.topic_posts(topic['id'])
+        tasks.distribute_voucher.private_message_handler(client, topic, posts)
+
+
 def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at('13:37').do(tasks.announce_plenum.main, client)
+
+    schedule.every(30).seconds.do(fetch_unread_messages, client)
+    # fetch_unread_messages(client)
 
 
 def main():

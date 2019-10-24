@@ -21,6 +21,9 @@ class DiscourseStorageClient(DiscourseClient):
     def single_post(self, post_id, **kwargs):
         return self._get(f'/posts/{post_id}.json', **kwargs)
 
+    def single_topic(self, topic_id, **kwargs):
+        return self._get(f'/t/{topic_id}.json', **kwargs)
+
 
 class DiscourseStorage:
     """
