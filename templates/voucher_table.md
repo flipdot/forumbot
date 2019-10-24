@@ -14,3 +14,8 @@ Die Voucher replizieren sich, das heißt: Im Bestellvorgang könnt ihr eine Mail
 {% for voucher in vouchers -%}
 | #{{ loop.index }} | {{ voucher.owner or '' }} | {{ voucher.received.strftime('%c') if voucher.received else '' }} | {{ voucher.persons or '' }} |
 {% endfor -%}
+
+Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle ihren Voucher nicht mehr benötigt:
+{% for name in queue %}
+  - {{ name }}
+{%- endfor %}

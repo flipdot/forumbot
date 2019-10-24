@@ -48,6 +48,7 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> Non
                     'voucher': v,
                 } for v in received_voucher],
                 'received_on': datetime.now(),
+                'queue_topic': topic['id'],
             })
 
 
@@ -57,6 +58,7 @@ def get_username(voucher: VoucherConfigElement) -> Optional[str]:
 
 
 def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
+    assert not voucher['message_id'], 'Wanted to send a voucher, again'
     username = get_username(voucher)
     message_content = render('voucher_message.md', voucher=voucher)
     logging.info(f'Sending voucher to {username}')
@@ -87,25 +89,51 @@ def check_for_returned_voucher(client: DiscourseClient, voucher: VoucherConfigEl
         return new_voucher[0]
 
 
+# TODO: think hard about maintaining the correct state. Not like this.
+# def update_queue(client: DiscourseStorageClient):
+#     data = client.storage.get('voucher')
+#     topic_id = data.get('queue_topic')
+#     queue_posts = [p for p in client.posts(topic_id)['post_stream']['posts'][0:] if not p['yours']]
+#     for post in queue_posts:
+#         pprint(post)
+#         usernames = re.findall(r'@([^ ]+)', post['cooked'])
+#         print(usernames)
+#     import sys
+#     sys.exit()
+
+
 def main(client: DiscourseStorageClient) -> None:
     data = client.storage.get('voucher')
     for voucher in data.get('voucher'):
         if not voucher['owner']:
-            continue
+            queue = data.get('queue')
+            if not queue or type(queue) != list:
+                continue
+            voucher['owner'] = queue.pop(0)
         if voucher.get('message_id'):
             new_voucher_code = check_for_returned_voucher(client, voucher)
             if new_voucher_code:
                 logging.info(f'Voucher returned by {get_username(voucher)}')
                 send_message_to_user(client, voucher, message=f'Prima, vielen Dank für "{new_voucher_code}"!')
+
+                old_owner = get_username(voucher)
                 voucher['voucher'] = new_voucher_code
                 voucher['owner'] = None
+                voucher['old_owner'] = old_owner
                 voucher['message_id'] = None
                 voucher['persons'] = None
                 voucher['received'] = None
-        else:
+        elif voucher['owner']:
             send_voucher_to_user(client, voucher)
+            old_owner = voucher.get('old_owner')
+            if old_owner:
+                send_message_to_user(
+                    client,
+                    voucher,
+                    message=f'Falls es Probleme mit dem Voucher gibt, wende dich bitte an @{old_owner}'
+                )
 
-    post_content = render('voucher_table.md', vouchers=data.get('voucher'))
+    post_content = render('voucher_table.md', vouchers=data.get('voucher'), queue=data.get('queue'))
     # TODO: voucher_table_post_id does not get saved. We need to create a post as soon as we received the voucher list
     client.update_post(data.get('voucher_table_post_id'), post_content)
 
