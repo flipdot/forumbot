@@ -125,13 +125,6 @@ def main(client: DiscourseStorageClient) -> None:
                 voucher['received'] = None
         elif voucher['owner']:
             send_voucher_to_user(client, voucher)
-            old_owner = voucher.get('old_owner')
-            if old_owner:
-                send_message_to_user(
-                    client,
-                    voucher,
-                    message=f'Falls es Probleme mit dem Voucher gibt, wende dich bitte an @{old_owner}'
-                )
 
     post_content = render('voucher_table.md', vouchers=data.get('voucher'), queue=data.get('queue'))
     # TODO: voucher_table_post_id does not get saved. We need to create a post as soon as we received the voucher list
