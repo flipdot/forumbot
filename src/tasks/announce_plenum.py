@@ -29,7 +29,7 @@ def topic_exists(title: str, topics: List[str]):
 def main(client: DiscourseClient) -> None:
     now = datetime.now()
     plenum_date, delta = get_next_plenum_date(now)
-    if delta.days > 7:
+    if delta.days > 9:
         logging.info(
             f'Next plenum is too far in the future ({delta.days} days). Aborting.'
         )
