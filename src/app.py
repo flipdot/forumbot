@@ -49,8 +49,10 @@ def fetch_unread_messages(client: DiscourseStorageClient):
 def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at('13:37').do(tasks.announce_plenum.main, client)
 
-    schedule.every(30).seconds.do(fetch_unread_messages, client)
-    schedule.every().minute.do(tasks.distribute_voucher.main, client)
+    # Disable voucherbot
+    # schedule.every(30).seconds.do(fetch_unread_messages, client)
+    # schedule.every().minute.do(tasks.distribute_voucher.main, client)
+
     # fetch_unread_messages(client)
 
 
