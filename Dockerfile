@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.8-slim
 
 # Set german locale
 RUN apt-get update && apt-get install -y locales
