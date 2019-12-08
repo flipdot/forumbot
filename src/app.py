@@ -66,6 +66,7 @@ def main():
     )
     parser.add_argument('--dry', action='store_true', help='do not execute POST or PUT requests')
     parser.add_argument('--run_task', type=str, help='runs a specific task immediately and stops afterwards')
+    parser.add_argument('--test_connection', action='store_true', help='checks if a connection to discourse is possible and exits')
 
     args = parser.parse_args()
 
@@ -75,6 +76,10 @@ def main():
         disable_request(client, 'PUT')
 
     test_login(client)
+
+    if args.test_connection:
+        logging.info(f'Connection to "{DISCOURSE_CREDENTIALS["host"]}" with user "{DISCOURSE_CREDENTIALS["api_username"]}" tested successfully')
+        sys.exit(0)
 
     if args.run_task:
         import importlib
