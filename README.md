@@ -8,9 +8,9 @@
     
 ## Deployment
 
-The python script is running on a pi (without docker). When the pi boots, it
-will pull this repo, execute `pip install -r requirements.txt` and starts
-`app.py`. You just need to repower the correct pi in the space ;)
+The python script is running on a server, configured
+[in our ansible playbook](https://gitlab.com/flipdot/devops/tree/master/roles/flipbot).
+Any change on the master branch will be automatically deployed.
 
 ## Developing
 
