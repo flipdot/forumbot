@@ -3,3 +3,4 @@ pydiscourse==0.9.0
 PyYAML==5.1.2
 requests==2.22.0
 schedule==0.6.0
+python-dateutil=2.8.1
