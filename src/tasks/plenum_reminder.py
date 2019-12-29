@@ -66,7 +66,7 @@ def is_day_before_plenum(date: datetime) -> bool:
     day_before_plenum = date-timedelta(1)
 
     if datetime.now() != day_before_plenum.date():
-        return True
+        return False
 
     return True
 
