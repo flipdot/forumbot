@@ -82,8 +82,8 @@ def main():
 
     if args.test_connection:
         logging.info(
-            (f'Connection to "{DISCOURSE_CREDENTIALS["host"]}" with user"')
-            (f' {DISCOURSE_CREDENTIALS["api_username"]}" tested successfully'))
+            f'Connection to "{DISCOURSE_CREDENTIALS["host"]}" with user"'
+            f' {DISCOURSE_CREDENTIALS["api_username"]}" tested successfully')
         sys.exit(0)
 
     if args.run_task:

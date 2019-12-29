@@ -9,7 +9,7 @@ from dateutil.parser import parse
 
 
 def extract_plenum_date_from_topic(topic: dict) -> Optional[datetime]:
-    extracted_date = re.search(r'\d{4}-\d{2}-\d{2}', topic["title"])
+    extracted_date = re.search(r'\d{4}-\d{2}-\d{2}', topic['title'])
     if not extracted_date:
         return None
 
@@ -43,7 +43,7 @@ def send_private_message(client: DiscourseStorageClient, username: str, title: s
                        target_usernames=username)
 
 
-PLENUM_REMINDER_KEY = "plenum_reminder_v9"
+PLENUM_REMINDER_KEY = 'plenum_reminder_v9'
 
 
 def plenum_announced(client: DiscourseStorageClient, plenum_date: datetime) -> bool:
@@ -57,7 +57,7 @@ def plenum_announced(client: DiscourseStorageClient, plenum_date: datetime) -> b
 def mark_plenum_announced(client: DiscourseStorageClient, plenum_date: datetime) -> None:
     current_storage = client.storage.get(PLENUM_REMINDER_KEY)
 
-    current_storage[plenum_date] = "announced"
+    current_storage[plenum_date] = 'announced'
 
     client.storage.put(PLENUM_REMINDER_KEY, current_storage)
 
@@ -71,7 +71,7 @@ def is_day_before_plenum(date: datetime) -> bool:
     return True
 
 
-PLENUM_NOTIFICATION_GROUP_NAME = "notify_plena"
+PLENUM_NOTIFICATION_GROUP_NAME = 'notify_plena'
 
 
 def main(client: DiscourseStorageClient) -> None:
@@ -93,8 +93,8 @@ def main(client: DiscourseStorageClient) -> None:
         return
 
     send_private_message(
-        client, PLENUM_NOTIFICATION_GROUP_NAME, f"Plenum reminder: {extracted_plenum_date} @ 1800",
-        "aa a")
+        client, PLENUM_NOTIFICATION_GROUP_NAME, f'Plenum reminder: {extracted_plenum_date} @ 1800',
+        'aa a')
 
     mark_plenum_announced(client, extracted_plenum_date)
 
