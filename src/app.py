@@ -13,7 +13,7 @@ import locale
 import schedule
 import tasks.announce_plenum
 import tasks.distribute_voucher
-import tasks.announce_plenum
+import tasks.plenum_reminder
 
 locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 
