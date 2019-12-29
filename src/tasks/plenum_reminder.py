@@ -43,34 +43,21 @@ def send_private_message(client: DiscourseStorageClient, username: str, title: s
                        target_usernames=username)
 
 
-USERS_TO_BE_NOTIFIED = ["Lenny"]
+PLENUM_REMINDER_KEY = "plenum_reminder_v9"
 
 
-def get_users_to_be_notified(client: DiscourseStorageClient, plenum_date: datetime) -> List[str]:
-    # TODO: build private message based signup
-    return [user for user in USERS_TO_BE_NOTIFIED if not is_user_notified(client, user, plenum_date)]
-
-
-def is_user_notified(client: DiscourseStorageClient, username: str, plenum_date: datetime) -> bool:
+def plenum_announced(client: DiscourseStorageClient, plenum_date: datetime) -> bool:
     current_storage = client.storage.get(PLENUM_REMINDER_KEY)
     if plenum_date not in current_storage:
-        return False
-
-    if username not in current_storage[plenum_date]:
         return False
 
     return True
 
 
-PLENUM_REMINDER_KEY = "plenum_reminder_v7"
-
-
-def mark_user_notified(client: DiscourseStorageClient, username: str, plenum_date: datetime) -> None:
+def mark_plenum_announced(client: DiscourseStorageClient, plenum_date: datetime) -> None:
     current_storage = client.storage.get(PLENUM_REMINDER_KEY)
-    if plenum_date not in current_storage:
-        current_storage[plenum_date] = set()
 
-    current_storage[plenum_date].add(username)
+    current_storage[plenum_date] = "announced"
 
     client.storage.put(PLENUM_REMINDER_KEY, current_storage)
 
@@ -84,19 +71,31 @@ def is_day_before_plenum(date: datetime) -> bool:
     return True
 
 
+PLENUM_NOTIFICATION_GROUP_NAME = "notify_plena"
+
+
 def main(client: DiscourseStorageClient) -> None:
     topics = client.category_topics('orga/plena')['topic_list']['topics']
 
     latest = latest_topic(topics)
+    if not latest:
+        return
 
     extracted_plenum_date = extract_plenum_date_from_topic(latest)
+    if not extracted_plenum_date:
+        logging.info(f'Failed to extract date from topic: {latest["title"]}')
+        return
+
     if not is_day_before_plenum(extracted_plenum_date):
         return
 
-    for user in get_users_to_be_notified(client, extracted_plenum_date):
-        send_private_message(
-            client, user, f"Plenum reminder: {extracted_plenum_date} @ 1800",
-            "aa")
+    if plenum_announced(client, extracted_plenum_date):
+        return
 
-        mark_user_notified(client, user, extracted_plenum_date)
-        logging.info(f'Notified: {user}')
+    send_private_message(
+        client, PLENUM_NOTIFICATION_GROUP_NAME, f"Plenum reminder: {extracted_plenum_date} @ 1800",
+        "aa a")
+
+    mark_plenum_announced(client, extracted_plenum_date)
+
+    logging.info(f'Announed plenun: {extracted_plenum_date}')
