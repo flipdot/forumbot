@@ -97,7 +97,7 @@ def main(client: DiscourseStorageClient) -> None:
 
     send_private_message(
         client, PLENUM_NOTIFICATION_GROUP_NAME, f'Plenum reminder: {extracted_plenum_date}',
-        'Morgen ist Plenum \o /\n'
+        'Morgen ist Plenum \\o/\n'
         f'{TOPIC_LINK_BASE + latest["id"]}')
 
     mark_plenum_announced(client, extracted_plenum_date)
