@@ -2,10 +2,8 @@ import logging
 
 from client import DiscourseStorageClient
 
-from utils import render
 from datetime import timedelta, datetime
-from itertools import count
-from typing import Tuple, List, Optional
+from typing import List, Optional
 import re
 from dateutil.parser import parse
 
@@ -55,10 +53,10 @@ def get_users_to_be_notified(client: DiscourseStorageClient, plenum_date: dateti
 
 def is_user_notified(client: DiscourseStorageClient, username: str, plenum_date: datetime) -> bool:
     current_storage = client.storage.get(PLENUM_REMINDER_KEY)
-    if not (plenum_date in current_storage):
+    if plenum_date not in current_storage:
         return False
 
-    if not username in current_storage[plenum_date]:
+    if username not in current_storage[plenum_date]:
         return False
 
     return True
@@ -69,7 +67,7 @@ PLENUM_REMINDER_KEY = "plenum_reminder_v7"
 
 def mark_user_notified(client: DiscourseStorageClient, username: str, plenum_date: datetime) -> None:
     current_storage = client.storage.get(PLENUM_REMINDER_KEY)
-    if not (plenum_date in current_storage):
+    if plenum_date not in current_storage:
         current_storage[plenum_date] = set()
 
     current_storage[plenum_date].add(username)
@@ -97,6 +95,8 @@ def main(client: DiscourseStorageClient) -> None:
 
     for user in get_users_to_be_notified(client, extracted_plenum_date):
         send_private_message(
-            client, user, f"Plenum reminder: {extracted_plenum_date} @ 1800", "dashiermussmindestens2zeichenlangseinlol")
+            client, user, f"Plenum reminder: {extracted_plenum_date} @ 1800",
+            "aa")
+
         mark_user_notified(client, user, extracted_plenum_date)
         logging.info(f'Notified: {user}')
