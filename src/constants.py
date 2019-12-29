@@ -1,9 +1,11 @@
 import os
 
+DISCOURSE_HOST = os.getenv('DISCOURSE_HOST').rstrip("/") or 'https://forum.flipdot.org'
+
 DISCOURSE_CREDENTIALS = {
     'api_key': os.getenv('DISCOURSE_API_KEY'),
     'api_username': os.getenv('DISCOURSE_USERNAME') or 'flipbot',
-    'host': os.getenv('DISCOURSE_HOST') or 'https://forum.flipdot.org',
+    'host': DISCOURSE_HOST,
 }
 
 assert DISCOURSE_CREDENTIALS[

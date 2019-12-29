@@ -6,6 +6,7 @@ from datetime import timedelta, datetime
 from typing import List, Optional
 import re
 from dateutil.parser import parse
+from constants import DISCOURSE_HOST
 
 
 def extract_plenum_date_from_topic(topic: dict) -> Optional[datetime]:
@@ -73,6 +74,8 @@ def is_day_before_plenum(date: datetime) -> bool:
 
 PLENUM_NOTIFICATION_GROUP_NAME = 'notify_plena'
 
+TOPIC_LINK_BASE = DISCOURSE_HOST + '/t/'
+
 
 def main(client: DiscourseStorageClient) -> None:
     topics = client.category_topics('orga/plena')['topic_list']['topics']
@@ -93,8 +96,9 @@ def main(client: DiscourseStorageClient) -> None:
         return
 
     send_private_message(
-        client, PLENUM_NOTIFICATION_GROUP_NAME, f'Plenum reminder: {extracted_plenum_date} @ 1800',
-        'aa a')
+        client, PLENUM_NOTIFICATION_GROUP_NAME, f'Plenum reminder: {extracted_plenum_date}',
+        'Morgen ist Plenum \o /\n'
+        f'{TOPIC_LINK_BASE + latest["id"]}')
 
     mark_plenum_announced(client, extracted_plenum_date)
 
