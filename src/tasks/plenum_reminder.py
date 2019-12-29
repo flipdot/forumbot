@@ -9,8 +9,8 @@ from dateutil.parser import parse
 from constants import DISCOURSE_HOST
 
 
-def extract_plenum_date_from_topic(topic: dict) -> Optional[datetime]:
-    extracted_date = re.search(r'\d{4}-\d{2}-\d{2}', topic['title'])
+def extract_plenum_date_from_topic(title: str) -> Optional[datetime]:
+    extracted_date = re.search(r'\d{4}-\d{2}-\d{2}', title)
     if not extracted_date:
         return None
 
@@ -44,32 +44,10 @@ def send_private_message(client: DiscourseStorageClient, username: str, title: s
                        target_usernames=username)
 
 
-PLENUM_REMINDER_KEY = 'plenum_reminder_v9'
-
-
-def plenum_announced(client: DiscourseStorageClient, plenum_date: datetime) -> bool:
-    current_storage = client.storage.get(PLENUM_REMINDER_KEY)
-    if plenum_date not in current_storage:
-        return False
-
-    return True
-
-
-def mark_plenum_announced(client: DiscourseStorageClient, plenum_date: datetime) -> None:
-    current_storage = client.storage.get(PLENUM_REMINDER_KEY)
-
-    current_storage[plenum_date] = 'announced'
-
-    client.storage.put(PLENUM_REMINDER_KEY, current_storage)
-
-
 def is_day_before_plenum(date: datetime) -> bool:
     day_before_plenum = date-timedelta(1)
 
-    if datetime.now().date() != day_before_plenum.date():
-        return False
-
-    return True
+    return datetime.now().date() == day_before_plenum.date()
 
 
 PLENUM_NOTIFICATION_GROUP_NAME = 'notify_plena'
@@ -84,7 +62,7 @@ def main(client: DiscourseStorageClient) -> None:
     if not latest:
         return
 
-    extracted_plenum_date = extract_plenum_date_from_topic(latest)
+    extracted_plenum_date = extract_plenum_date_from_topic(latest['title'])
     if not extracted_plenum_date:
         logging.info(f'Failed to extract date from topic: {latest["title"]}')
         return
@@ -92,14 +70,9 @@ def main(client: DiscourseStorageClient) -> None:
     if not is_day_before_plenum(extracted_plenum_date):
         return
 
-    if plenum_announced(client, extracted_plenum_date):
-        return
-
     send_private_message(
         client, PLENUM_NOTIFICATION_GROUP_NAME, f'Plenum reminder: {extracted_plenum_date}',
         'Morgen ist Plenum \\o/\n'
         f'{TOPIC_LINK_BASE + latest["id"]}')
-
-    mark_plenum_announced(client, extracted_plenum_date)
 
     logging.info(f'Announed plenun: {extracted_plenum_date}')
