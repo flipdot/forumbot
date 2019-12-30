@@ -64,7 +64,7 @@ def main(client: DiscourseStorageClient) -> None:
 
     extracted_plenum_date = extract_plenum_date_from_topic(latest['title'])
     if not extracted_plenum_date:
-        logging.info(f'Failed to extract date from topic: {latest["title"]}')
+        logging.warn(f'Failed to extract date from topic: {latest["title"]}')
         return
 
     if not is_day_before_plenum(extracted_plenum_date):
@@ -75,4 +75,4 @@ def main(client: DiscourseStorageClient) -> None:
         'Morgen ist Plenum \\o/\n'
         f'{TOPIC_LINK_BASE + latest["id"]}')
 
-    logging.info(f'Announed plenun: {extracted_plenum_date}')
+    logging.info(f'Announed plenum: {extracted_plenum_date}')
