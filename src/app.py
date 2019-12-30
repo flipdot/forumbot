@@ -13,6 +13,7 @@ import locale
 import schedule
 import tasks.announce_plenum
 import tasks.distribute_voucher
+import tasks.plenum_reminder
 
 locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 
@@ -48,6 +49,7 @@ def fetch_unread_messages(client: DiscourseStorageClient):
 
 def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at('13:37').do(tasks.announce_plenum.main, client)
+    schedule.every().day.at('13:37').do(tasks.plenum_reminder.main, client)
 
     # Disable voucherbot
     # schedule.every(30).seconds.do(fetch_unread_messages, client)
@@ -66,7 +68,8 @@ def main():
     )
     parser.add_argument('--dry', action='store_true', help='do not execute POST or PUT requests')
     parser.add_argument('--run_task', type=str, help='runs a specific task immediately and stops afterwards')
-    parser.add_argument('--test_connection', action='store_true', help='checks if a connection to discourse is possible and exits')
+    parser.add_argument('--test_connection', action='store_true',
+                        help='checks if a connection to discourse is possible and exits')
 
     args = parser.parse_args()
 
@@ -78,7 +81,9 @@ def main():
     test_login(client)
 
     if args.test_connection:
-        logging.info(f'Connection to "{DISCOURSE_CREDENTIALS["host"]}" with user "{DISCOURSE_CREDENTIALS["api_username"]}" tested successfully')
+        logging.info(
+            f'Connection to "{DISCOURSE_CREDENTIALS["host"]}" with user"'
+            f' {DISCOURSE_CREDENTIALS["api_username"]}" tested successfully')
         sys.exit(0)
 
     if args.run_task:
