@@ -1,6 +1,6 @@
 import os
 
-DISCOURSE_HOST = os.getenv('DISCOURSE_HOST').rstrip("/") or 'https://forum.flipdot.org'
+DISCOURSE_HOST = os.getenv('DISCOURSE_HOST', '').rstrip('/') or 'https://forum.flipdot.org'
 
 DISCOURSE_CREDENTIALS = {
     'api_key': os.getenv('DISCOURSE_API_KEY'),
