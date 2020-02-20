@@ -7,6 +7,10 @@ from datetime import timedelta, datetime
 from itertools import count
 from typing import Tuple, List
 import re
+import requests
+import os
+
+PAD_BASE_URL = os.getenv('PAD_BASE_URL', '').rstrip('/') or 'https://pad.flipdot.org'
 
 
 def get_next_plenum_date(now: datetime) -> Tuple[datetime, timedelta]:
@@ -43,7 +47,15 @@ def main(client: DiscourseClient) -> None:
         logging.info(f'"{title}" was already announced. Aborting.')
         return
 
-    post_content = render('plenum.md', plenum_date=plenum_date)
+    pad_template = render('plenum_pad_template.md', plenum_date=plenum_date).encode('utf-8')
+    res = requests.post(PAD_BASE_URL + '/new', data=pad_template, headers={
+        'Content-Type': 'text/markdown; charset=utf-8',
+    })
+    if res.status_code != 200:
+        logging.error('Could not generate a new pad')
+        return
+    pad_url = res.url
+    post_content = render('plenum.md', plenum_date=plenum_date, pad_url=pad_url)
 
     # Category 23 == 'orga/plena'. But we must use the id here. D'oh!
     client.create_post(post_content, category_id=23, title=title)

@@ -5,8 +5,8 @@ Wir wollen am {{ plenum_date.strftime('%A, den **%x**') }} plenieren. Bitte lies
 Plenum: 18:00
 Putzen: 19:00
 
-Wir sammeln uns gedanklich auf dem [Pad](https://pad.freifunk-kassel.de/p/fd-plenum-{{ plenum_date.strftime('%Y-%m-%d') }}). Später wird dieser Thread mit dem Ergebnisprotokoll versehen.
+Wir sammeln und protokollieren auf dem [Pad]({{ pad_url }}). Nach dem Plenum werde ich den Inhalt des Pads hier einfügen. 
 
 # Ergebnisprotokoll
 
-\<Im Nachhinein einzufügen\>
+PROTOCOL_PLACEHOLDER
