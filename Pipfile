@@ -12,6 +12,7 @@ schedule = "==0.6.0"
 python-dateutil = "==2.8.1"
 Jinja2 = "==2.10.1"
 PyYAML = "==5.1.2"
+mistune = "*"
 
 [requires]
 python_version = "3.7"

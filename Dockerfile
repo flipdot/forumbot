@@ -8,12 +8,15 @@ ENV LANGUAGE de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 RUN locale-gen de_DE.UTF-8
 
-COPY requirements.txt /app/
+RUN apt-get install -y pipenv
+
+COPY Pipfile /app/
+COPY Pipfile.lock /app/
 
 WORKDIR  /app
-RUN pip install -r requirements.txt
+RUN pipenv install
 
 COPY src /app/src
 COPY templates /app/templates
 
-CMD python src/app.py
+CMD pipenv run python src/app.py
