@@ -15,6 +15,7 @@ PyYAML = "==5.1.2"
 v2-0-0-a2 = {editable = true,git = "https://github.com/lepture/mistune"}
 v2-0-0a2 = {editable = true,git = "https://github.com/lepture/mistune"}
 numpy = "*"
+nose = "*"
 
 [requires]
 python_version = "3.8"

@@ -22,7 +22,5 @@ jobs:
       run: pip install flake8
     - name: Run stylecheck
       run: flake8 .
-    - name: Install nosetests
-      run: pip install nose
     - name: Run tests
-      run: nosetests --with-doctest tests
+      run: pipenv run nosetests --with-doctest tests
