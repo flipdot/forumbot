@@ -1,5 +1,4 @@
 import unittest
-from datetime import datetime
 
 from tasks.plenum.post_protocol import parse_protocol
 

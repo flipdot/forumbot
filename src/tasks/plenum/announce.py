@@ -33,7 +33,8 @@ def main(client: DiscourseStorageClient) -> None:
         logging.error('Could not generate a new pad')
         return
     pad_url = res.url
-    post_content = render('plenum.md', plenum_date=plenum_date, pad_url=pad_url, PROTOCOL_PLACEHOLDER=PROTOCOL_PLACEHOLDER)
+    post_content = render('plenum.md', plenum_date=plenum_date, pad_url=pad_url,
+                          PROTOCOL_PLACEHOLDER=PROTOCOL_PLACEHOLDER)
 
     # Category 23 == 'orga/plena'. But we must use the id here. D'oh!
     # Category 24 == 'test'
