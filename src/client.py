@@ -48,11 +48,11 @@ class DiscourseStorage:
                 self._storage_ids[key] = topic['id'], None
             page += 1
 
-    def get(self, key) -> Dict:
+    def get(self, key, default=None) -> Dict:
         topic_id, post_id = self._storage_ids.get(key, (None, None))
         if not topic_id:
             logging.info(f'No storage "{key}" found.')
-            return {}
+            return default or {}
         if not post_id:
             post_id = self.client.posts(topic_id)['post_stream']['posts'][0]['id']
             self._storage_ids[key] = topic_id, post_id

@@ -11,9 +11,10 @@ from time import sleep
 
 import locale
 import schedule
-import tasks.announce_plenum
 import tasks.distribute_voucher
-import tasks.plenum_reminder
+import tasks.plenum.announce
+import tasks.plenum.remind
+import tasks.plenum.post_protocol
 
 locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 
@@ -49,8 +50,9 @@ def fetch_unread_messages(client: DiscourseStorageClient):
 
 def schedule_jobs(client: DiscourseStorageClient) -> None:
     # TODO: timezone is not correct, quickfix by subtracting an hour
-    schedule.every().day.at('12:37').do(tasks.announce_plenum.main, client)
-    schedule.every().day.at('12:37').do(tasks.plenum_reminder.main, client)
+    schedule.every().day.at('12:37').do(tasks.plenum.announce.main, client)
+    schedule.every().day.at('12:37').do(tasks.plenum.remind.main, client)
+    schedule.every().day.at('20:00').do(tasks.plenum.post_protocol.main, client)
 
     # Disable voucherbot
     # schedule.every(30).seconds.do(fetch_unread_messages, client)

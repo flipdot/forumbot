@@ -13,14 +13,14 @@
 
 ### Vorstellungsrunde und Mitgliedsanträge [von @vertrauensstufe_0] (10 min)
 
-{% for _ in range(5) %}
-### Dein Thema [von @flipbot] (15 min)
+{% for topic in topics %}
+### {{ topic.title }} [von @{{ topic.author }}] (15 min)
 
-**Darüber möchte ich sprechen:**
+#### Darüber möchte ich sprechen
 - Lorem
 - Ipsum
 
-**Darüber wurde während des Plenums gesprochen:**
+#### Darüber wurde während des Plenums gesprochen
 - Thema wurde nicht besprochen
 
 {% endfor %}

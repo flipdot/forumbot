@@ -9,4 +9,4 @@ Wir sammeln und protokollieren auf dem [Pad]({{ pad_url }}). Nach dem Plenum wer
 
 # Ergebnisprotokoll
 
-PROTOCOL_PLACEHOLDER
+{{ PROTOCOL_PLACEHOLDER }}
