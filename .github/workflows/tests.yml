@@ -5,21 +5,17 @@ on: push
 jobs:
   build:
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python-version: ['3.6', '3.7']
-        os: ['ubuntu-16.04', 'ubuntu-18.04']
+    runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v1
     - name: Setup python
       uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.8
         architecture: x64
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: pipenv install
     - name: Install stylechecker
       run: pip install flake8
     - name: Run stylecheck
