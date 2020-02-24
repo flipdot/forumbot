@@ -14,6 +14,8 @@ jobs:
       with:
         python-version: 3.8
         architecture: x64
+    - name: apt update
+      run: sudo apt-get update
     - name: Install pipenv
       run: sudo apt-get install -y pipenv
     - name: Install dependencies
