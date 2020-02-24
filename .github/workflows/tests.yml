@@ -15,7 +15,7 @@ jobs:
         python-version: 3.8
         architecture: x64
     - name: Install pipenv
-      run: apt-get install -y pipenv
+      run: sudo apt-get install -y pipenv
     - name: Install dependencies
       run: pipenv install
     - name: Install stylechecker
