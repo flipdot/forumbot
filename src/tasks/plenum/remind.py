@@ -3,14 +3,14 @@ import logging
 from client import DiscourseStorageClient
 
 from datetime import timedelta, datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 import re
 from dateutil.parser import parse
 from constants import DISCOURSE_HOST
 
 
-def extract_plenum_date_from_topic(title: str) -> Optional[datetime]:
-    extracted_date = re.search(r'\d{4}-\d{2}-\d{2}', title)
+def extract_plenum_date_from_topic(topic: Dict[str, str]) -> Optional[datetime]:
+    extracted_date = re.search(r'\d{4}-\d{2}-\d{2}', topic['title'])
     if not extracted_date:
         return None
 
@@ -62,17 +62,18 @@ def main(client: DiscourseStorageClient) -> None:
     if not latest:
         return
 
-    extracted_plenum_date = extract_plenum_date_from_topic(latest['title'])
+    extracted_plenum_date = extract_plenum_date_from_topic(latest)
     if not extracted_plenum_date:
-        logging.warn(f'Failed to extract date from topic: {latest["title"]}')
+        logging.warning(f'Failed to extract date from topic: {latest["title"]}')
         return
 
     if not is_day_before_plenum(extracted_plenum_date):
+        logging.info(f'Tomorrow is no plenum. Next plenum on {extracted_plenum_date}')
         return
 
     send_private_message(
         client, PLENUM_NOTIFICATION_GROUP_NAME, f'Plenum reminder: {extracted_plenum_date}',
         'Morgen ist Plenum \\o/\n'
-        f'{TOPIC_LINK_BASE + latest["id"]}')
+        f'{TOPIC_LINK_BASE}{latest["id"]}')
 
     logging.info(f'Announed plenum: {extracted_plenum_date}')
