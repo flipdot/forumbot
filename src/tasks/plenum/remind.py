@@ -39,13 +39,8 @@ def latest_topic(topics: List[dict]) -> Optional[dict]:
     return latest
 
 
-def send_private_message(client: DiscourseStorageClient, username: str, title: str, message: str):
-    client.create_post(message, title=title, archetype='private_message',
-                       target_usernames=username)
-
-
 def is_day_before_plenum(date: datetime) -> bool:
-    day_before_plenum = date-timedelta(1)
+    day_before_plenum = date - timedelta(1)
 
     return datetime.now().date() == day_before_plenum.date()
 
@@ -71,9 +66,4 @@ def main(client: DiscourseStorageClient) -> None:
         logging.info(f'Tomorrow is no plenum. Next plenum on {extracted_plenum_date}')
         return
 
-    send_private_message(
-        client, PLENUM_NOTIFICATION_GROUP_NAME, f'Plenum reminder: {extracted_plenum_date}',
-        'Morgen ist Plenum \\o/\n'
-        f'{TOPIC_LINK_BASE}{latest["id"]}')
-
-    logging.info(f'Announed plenum: {extracted_plenum_date}')
+    client.create_post(f'@{PLENUM_NOTIFICATION_GROUP_NAME}\n\nMorgen ist Plenum \\o/', topic_id=latest['id'])
