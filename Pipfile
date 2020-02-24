@@ -17,4 +17,4 @@ v2-0-0a2 = {editable = true,git = "https://github.com/lepture/mistune"}
 numpy = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
