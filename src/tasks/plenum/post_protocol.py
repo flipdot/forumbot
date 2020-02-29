@@ -29,11 +29,12 @@ def parse_protocol(protocol):
             title = topic[0]['children'][0]['text'].strip()
             if 'Vorstellungsrunde' in title:
                 continue
-            author_match = re.search(r'@(.+)?\]', topic[0]['children'][1]['text'])
+            title_text = ' '.join([x['text'] for x in topic[0]['children']])
+            author_match = re.search(r'@(.+)?\]', title_text)
             if author_match:
                 author = author_match.groups()[0]
             else:
-                author = 'unknown'
+                author = None
             was_discussed = 'Thema wurde nicht besprochen' not in str(topic[-1])
             result['topics'].append({
                 'title': title,

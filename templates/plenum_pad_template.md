@@ -14,7 +14,7 @@
 ### Vorstellungsrunde und Mitgliedsanträge [von @vertrauensstufe_0] (10 min)
 
 {% for topic in topics %}
-### {{ topic.title }} [von @{{ topic.author }}] (15 min)
+### {{ topic.title }} [von @{{ topic.author or 'flipbot' }}] (15 min)
 
 #### Darüber möchte ich sprechen
 - Lorem

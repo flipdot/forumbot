@@ -3,13 +3,13 @@ Danke für die Teilnahme am Plenum! Das Protokoll ist jetzt im Eingangspost verf
 Diese Themen wurden besprochen:
 
 {%- for topic in discussed_topics %}
-- {{ topic['title'] }} [von @{{ topic['author'] }}]
+- {{ topic['title'] }} [von @{{ topic['author'] or 'flipbot' }}]
 {%- endfor %}
 {% if undiscussed_topics %}
 Diese Themen wurden nicht mehr besprochen:
 
 {%- for topic in undiscussed_topics %}
-- {{ topic['title'] }} [von @{{ topic['author'] }}]
+- {{ topic['title'] }} [von @{{ topic['author'] or 'flipbot' }}]
 {%- endfor %}
 
 Die Titel der unbesprochenen Themen werde ich zum Pad für das nächste Plenum hinzufügen.
