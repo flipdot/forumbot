@@ -98,7 +98,9 @@ def main(client: DiscourseStorageClient) -> None:
     new_content = post_content.replace(PROTOCOL_PLACEHOLDER, protocol)
     client.update_post(post['id'], new_content, edit_reason='Added protocol')
 
-    client.storage.put('NEXT_PLENUM_TOPICS', undiscussed_topics)
+    # TODO: this should actually be fixed inside DiscourseDB, not here
+    if undiscussed_topics:
+        client.storage.put('NEXT_PLENUM_TOPICS', undiscussed_topics)
 
     protocol_posted_content = render('protocol_posted.md', discussed_topics=discussed_topics,
                                      undiscussed_topics=undiscussed_topics).encode('utf-8')
