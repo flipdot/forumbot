@@ -17,4 +17,5 @@ RUN pipenv install
 COPY src /app/src
 COPY templates /app/templates
 
-CMD pipenv run python src/app.py
+ENTRYPOINT ["pipenv", "run"]
+CMD python src/app.py
