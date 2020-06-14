@@ -109,7 +109,7 @@ def main():
             schedule.run_pending()
             sleep(1)
         except KeyboardInterrupt:
-            logging.info(f'Shutting down')
+            logging.info('Shutting down')
             sys.exit(0)
 
 
