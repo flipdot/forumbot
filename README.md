@@ -5,7 +5,7 @@
     docker run -d -e DISCOURSE_API_KEY=fefe flipdot/forumbot
     # if you want to run on another discourse instance:
     docker run -d -e DISCOURSE_API_KEY=fefe -e DISCOURSE_USERNAME=hello -e DISCOURSE_HOST=https://forum.example.com flipdot/forumbot
-    
+
 ## Deployment
 
 The python script is running on a server, configured
@@ -23,12 +23,11 @@ Clone this repo, make your changes, build a new container:
 
 Or, if you want to develop without docker:
 
-    pip install -r requirements.txt
+    pipenv sync
     DISCOURSE_API_KEY=fefe python src/app.py
-    
+
 Execute tests:
 
-    pip install nose
     nosetests tests
 
 ### How to add a job?
