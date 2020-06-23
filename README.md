@@ -20,11 +20,17 @@ Clone this repo, make your changes, build a new container:
 
     ./build_docker.sh
     DISCOURSE_API_KEY=fefe ./run_docker.sh
+    # or with the test user
+    DISCOURSE_API_KEY=fefe DISCOURSE_USERNAME=flipbot_test ./run_docker.sh
 
 Or, if you want to develop without docker:
 
     pipenv sync
     DISCOURSE_API_KEY=fefe python src/app.py
+    # or with the test user
+    DISCOURSE_API_KEY=fefe DISCOURSE_USERNAME=flipbot_test python src/app.py
+
+You can get the credentials of flipdot_test in our forum: https://forum.flipdot.org/t/api-key-fuer-flipbot-test/3755
 
 Execute tests:
 
