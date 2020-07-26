@@ -8,6 +8,8 @@ DISCOURSE_CREDENTIALS = {
     'host': DISCOURSE_HOST,
 }
 
+DEBUG = 'test' in DISCOURSE_CREDENTIALS['api_username']
+
 assert DISCOURSE_CREDENTIALS[
     'api_key'
 ], 'Environment variable DISCOURSE_API_KEY not set'

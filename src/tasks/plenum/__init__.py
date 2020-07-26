@@ -3,9 +3,15 @@ import re
 from datetime import datetime, timedelta
 from itertools import count
 from typing import Tuple, List
+from constants import DEBUG
 
 PAD_BASE_URL = os.getenv('PAD_BASE_URL', '').rstrip('/') or 'https://pad.flipdot.org'
 PROTOCOL_PLACEHOLDER = 'PROTOCOL_PLACEHOLDER'
+
+# Category 23 == 'orga/plena'. But we must use the id in client.create_post. D'oh!
+# Category 24 == 'test'
+DISCOURSE_CATEGORY_ID = 24 if DEBUG else 23
+DISCOURSE_CATEGORY_NAME = 'test' if DEBUG else 'orga/plena'
 
 
 def get_next_plenum_date(now: datetime) -> Tuple[datetime, timedelta]:

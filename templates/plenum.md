@@ -1,4 +1,4 @@
-@vertrauensstufe_0
+{{ mention }}
 
 Wir wollen am {{ plenum_date.strftime('%A, den **%x**') }} plenieren. Bitte lies [diesen Post](https://forum.flipdot.org/t/wie-funktioniert-ein-plenum/933), um besser zu verstehen, wie wir Plena handhaben.
 

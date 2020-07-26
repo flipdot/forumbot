@@ -7,6 +7,7 @@ from typing import List, Optional, Dict
 import re
 from dateutil.parser import parse
 from constants import DISCOURSE_HOST
+from tasks.plenum import DISCOURSE_CATEGORY_NAME
 
 
 def extract_plenum_date_from_topic(topic: Dict[str, str]) -> Optional[datetime]:
@@ -51,7 +52,7 @@ TOPIC_LINK_BASE = DISCOURSE_HOST + '/t/'
 
 
 def main(client: DiscourseStorageClient) -> None:
-    topics = client.category_topics('orga/plena')['topic_list']['topics']
+    topics = client.category_topics(DISCOURSE_CATEGORY_NAME)['topic_list']['topics']
 
     latest = latest_topic(topics)
     if not latest:
