@@ -7,7 +7,7 @@ import mistune
 import numpy as np
 
 from client import DiscourseStorageClient
-from tasks.plenum import get_next_plenum_date, PROTOCOL_PLACEHOLDER
+from tasks.plenum import get_next_plenum_date, PROTOCOL_PLACEHOLDER, DISCOURSE_CATEGORY_NAME
 from utils import render
 
 
@@ -51,7 +51,7 @@ def main(client: DiscourseStorageClient) -> None:
         logging.info('Today was no plenum. Aborting.')
         return
     title = plenum_date.strftime('%Y-%m-%d Plenum')
-    topics = [x for x in client.category_topics('orga/plena')['topic_list']['topics'] if x['title'] == title]
+    topics = [x for x in client.category_topics(DISCOURSE_CATEGORY_NAME)['topic_list']['topics'] if x['title'] == title]
 
     if not topics:
         logging.info(f'"{title}" does not exist, can\'t post protocol. Aborting.')
@@ -98,9 +98,7 @@ def main(client: DiscourseStorageClient) -> None:
     new_content = post_content.replace(PROTOCOL_PLACEHOLDER, protocol)
     client.update_post(post['id'], new_content, edit_reason='Added protocol')
 
-    # TODO: this should actually be fixed inside DiscourseDB, not here
-    if undiscussed_topics:
-        client.storage.put('NEXT_PLENUM_TOPICS', undiscussed_topics)
+    client.storage.put('NEXT_PLENUM_TOPICS', undiscussed_topics)
 
     protocol_posted_content = render('protocol_posted.md', discussed_topics=discussed_topics,
                                      undiscussed_topics=undiscussed_topics).encode('utf-8')
