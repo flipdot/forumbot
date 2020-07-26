@@ -24,3 +24,5 @@ jobs:
       run: flake8 .
     - name: Run tests
       run: pipenv run nosetests --with-doctest tests
+      env:
+        DISCOURSE_API_KEY=_
