@@ -25,4 +25,4 @@ jobs:
     - name: Run tests
       run: pipenv run nosetests --with-doctest tests
       env:
-        DISCOURSE_API_KEY=_
+        DISCOURSE_API_KEY=x
