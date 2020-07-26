@@ -23,6 +23,4 @@ jobs:
     - name: Run stylecheck
       run: flake8 .
     - name: Run tests
-      run: pipenv run nosetests --with-doctest tests
-      env:
-        DISCOURSE_API_KEY=x
+      run: DISCOURSE_API_KEY=x pipenv run nosetests --with-doctest tests
