@@ -34,7 +34,8 @@ You can get the credentials of flipdot_test in our forum: https://forum.flipdot.
 
 Execute tests:
 
-    nosetests tests
+    # an API key needs to be set, but you can use an invalid value
+    DISCOURSE_API_KEY=_ pipenv run nosetests
 
 ### How to add a job?
 
