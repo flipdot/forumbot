@@ -16,11 +16,8 @@
 {% for topic in topics %}
 ### {{ topic.title }} [von @{{ topic.author or 'flipbot' }}] (15 min)
 
-#### Darüber möchte ich sprechen
 - Lorem
 - Ipsum
-
-#### Darüber wurde während des Plenums gesprochen
 - Thema wurde nicht besprochen
 
 {% endfor %}
