@@ -17,7 +17,7 @@ jobs:
     - name: Install pipenv
       run: sudo pip install pipenv
     - name: Install dependencies
-      run: pipenv install
+      run: pipenv sync
     - name: Install stylechecker
       run: pip install flake8
     - name: Run stylecheck
