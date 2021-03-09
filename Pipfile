@@ -12,10 +12,9 @@ schedule = "==0.6.0"
 python-dateutil = "==2.8.1"
 Jinja2 = "==2.10.1"
 PyYAML = "==5.1.2"
-v2-0-0-a2 = {editable = true,git = "https://github.com/lepture/mistune"}
-v2-0-0a2 = {editable = true,git = "https://github.com/lepture/mistune"}
 numpy = "*"
 nose = "*"
+mistune = "==2.0.0.rc1"
 
 [requires]
 python_version = "3.8"
