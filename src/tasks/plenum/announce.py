@@ -12,7 +12,7 @@ import requests
 def main(client: DiscourseStorageClient) -> None:
     now = datetime.now()
     plenum_date, delta = get_next_plenum_date(now)
-    if delta.days > 16:
+    if delta.days > 6:
         logging.info(
             f'Next plenum is too far in the future ({delta.days} days). Aborting.'
         )
