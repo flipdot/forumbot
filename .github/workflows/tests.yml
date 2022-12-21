@@ -5,22 +5,23 @@ on: push
 jobs:
   build:
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout code
+      uses: actions/checkout@v3
     - name: Setup python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: '3.8'
         architecture: x64
     - name: Install pipenv
       run: sudo pip install pipenv
     - name: Install dependencies
       run: pipenv sync
-    - name: Install stylechecker
+    - name: Install style checker
       run: pip install flake8
-    - name: Run stylecheck
+    - name: Run style check
       run: flake8 .
     - name: Run tests
       run: pipenv run nosetests --with-doctest tests
