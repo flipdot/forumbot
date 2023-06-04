@@ -3,7 +3,7 @@ name: CI
 on: push
 
 jobs:
-  build:
+  tests:
 
     runs-on: ubuntu-latest
 
@@ -27,3 +27,23 @@ jobs:
       run: pipenv run nosetests --with-doctest tests
       env:
         DISCOURSE_API_KEY: _
+
+  build:
+    needs: tests
+    on:
+      push:
+        branches:
+          - master
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: flipdot/forumbot:latest
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
