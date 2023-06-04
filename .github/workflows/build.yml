@@ -6,8 +6,8 @@ on:
       - master
 
 jobs:
-  needs: tests
   build:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
