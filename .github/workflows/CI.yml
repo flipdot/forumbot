@@ -30,10 +30,7 @@ jobs:
 
   build:
     needs: tests
-    on:
-      push:
-        branches:
-          - master
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
