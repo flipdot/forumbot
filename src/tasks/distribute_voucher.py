@@ -107,7 +107,7 @@ def main(client: DiscourseStorageClient) -> None:
     for voucher in data.get('voucher'):
         if not voucher['owner']:
             queue = data.get('queue')
-            if not queue or type(queue) != list:
+            if not queue or type(queue) is not list:
                 continue
             voucher['owner'] = queue.pop(0)
         if voucher.get('message_id'):
