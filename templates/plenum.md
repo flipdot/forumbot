@@ -2,8 +2,8 @@
 
 Wir wollen am {{ plenum_date.strftime('%A, den **%x**') }} plenieren. Bitte lies [diesen Post](https://forum.flipdot.org/t/wie-funktioniert-ein-plenum/933), um besser zu verstehen, wie wir Plena handhaben.
 
-Plenum: 18:00
-Putzen: 19:00
+Plenum: 18:30
+Putzen: 19:30
 
 Das Plenum findet vor Ort in den Räumen des flipdot e.V. statt.
 
