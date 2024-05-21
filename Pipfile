@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 pydiscourse = "==1.1.1"
-requests = "==2.31.0"
+requests = "==2.32.0"
 schedule = "==0.6.0"
 python-dateutil = "==2.8.1"
 Jinja2 = "==2.11.3"
