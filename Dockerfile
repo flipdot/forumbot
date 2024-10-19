@@ -14,10 +14,10 @@ COPY pyproject.toml /app/
 COPY poetry.lock /app/
 
 WORKDIR  /app
-RUN pipenv sync
+RUN poetry install
 
 COPY src /app/src
 COPY templates /app/templates
 
-ENTRYPOINT ["pipenv", "run"]
+ENTRYPOINT ["poetry", "run"]
 CMD python src/app.py
