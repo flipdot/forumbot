@@ -33,12 +33,12 @@ Pack alle Voucher die du hast in eine einzige Nachricht!
 Wenn ich deine Nachricht verstehen konnte, schreibe ich dir zurück und aktualisiere diesen Post.
 
 {% else %}
-Wir haben {{ vouchers | length }} Voucher bekommen! Hier sind sie:
+Wir haben {{ vouchers | length }} Voucher zur Verfügung! Hier sind sie:
 
-| Voucher | Aktuell bei | seit | Für n Personen |
-| ------- | ----------- | ---- | -------------- |
+| Voucher | Aktuell bei | erhalten | Für n Personen |
+| ------- | ----------- |----------| -------------- |
 {% for voucher in vouchers -%}
-| #{{ loop.index }} | {{ voucher.owner or '' }} | {{ voucher.received.strftime('%c') if voucher.received else '' }} | {{ voucher.persons or '' }} |
+| #{{ loop.index }} | @{{ voucher.owner or bot_name }} | {{ voucher.received_delta }} | {{ voucher.persons or '' }} |
 {% endfor %}
 
 Du bist oben in der Liste? Dann hast du eine PN von mir bekommen! **Bitte kaufe schnellstmöglich deine Tickets!** https://tickets.events.ccc.de/
