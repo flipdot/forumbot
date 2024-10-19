@@ -7,11 +7,11 @@ from typing import List, Optional, Dict
 import re
 from dateutil.parser import parse
 from constants import DISCOURSE_HOST
-from tasks.plenum import DISCOURSE_CATEGORY_NAME
+from tasks.plenum import PLENUM_CATEGORY_NAME
 
 
 def extract_plenum_date_from_topic(topic: Dict[str, str]) -> Optional[datetime]:
-    extracted_date = re.search(r'\d{4}-\d{2}-\d{2}', topic['title'])
+    extracted_date = re.search(r"\d{4}-\d{2}-\d{2}", topic["title"])
     if not extracted_date:
         return None
 
@@ -46,13 +46,13 @@ def is_day_before_plenum(date: datetime) -> bool:
     return datetime.now().date() == day_before_plenum.date()
 
 
-PLENUM_NOTIFICATION_GROUP_NAME = 'notify_plena'
+PLENUM_NOTIFICATION_GROUP_NAME = "notify_plena"
 
-TOPIC_LINK_BASE = DISCOURSE_HOST + '/t/'
+TOPIC_LINK_BASE = DISCOURSE_HOST + "/t/"
 
 
 def main(client: DiscourseStorageClient) -> None:
-    topics = client.category_topics(DISCOURSE_CATEGORY_NAME)['topic_list']['topics']
+    topics = client.category_topics(PLENUM_CATEGORY_NAME)["topic_list"]["topics"]
 
     latest = latest_topic(topics)
     if not latest:
@@ -64,7 +64,10 @@ def main(client: DiscourseStorageClient) -> None:
         return
 
     if not is_day_before_plenum(extracted_plenum_date):
-        logging.info(f'Tomorrow is no plenum. Next plenum on {extracted_plenum_date}')
+        logging.info(f"Tomorrow is no plenum. Next plenum on {extracted_plenum_date}")
         return
 
-    client.create_post(f'@{PLENUM_NOTIFICATION_GROUP_NAME}\n\nMorgen ist Plenum \\o/', topic_id=latest['id'])
+    client.create_post(
+        f"@{PLENUM_NOTIFICATION_GROUP_NAME}\n\nMorgen ist Plenum \\o/",
+        topic_id=latest["id"],
+    )

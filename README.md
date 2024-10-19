@@ -14,6 +14,16 @@ Any change on the master branch will be automatically deployed.
 
 ## Developing
 
+### Compose setup
+
+If you are not able to get an API key for forum.flipdot.org, try the compose setup:
+
+```
+docker compose up
+```
+
+Go to http://localhost:3000/ and login with user `user@example.com` and password `bitnami123`
+
 ### Running
 
 Clone this repo, make your changes, build a new container:
@@ -25,7 +35,7 @@ Clone this repo, make your changes, build a new container:
 
 Or, if you want to develop without docker:
 
-    pipenv sync
+    poetry install
     DISCOURSE_API_KEY=fefe python src/app.py
     # or with the test user
     DISCOURSE_API_KEY=fefe DISCOURSE_USERNAME=flipbot_test python src/app.py
@@ -42,7 +52,7 @@ Execute tests:
 Start by copying `src/tasks/hello_world.py`. You can run your new task directly:
 
     python src/app.py --dry --run_task hello_world
-    
+
 ...where "hello_world" is the name of the python file.
 
 Modify the `main()` function:

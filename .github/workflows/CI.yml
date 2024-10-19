@@ -13,20 +13,26 @@ jobs:
     - name: Setup python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.8'
+        python-version: '3.13'
         architecture: x64
-    - name: Install pipenv
-      run: sudo pip install pipenv
+    - name: Install poetry
+      run: sudo pip install poetry
     - name: Install dependencies
-      run: pipenv sync
-    - name: Install style checker
-      run: pip install flake8
-    - name: Run style check
-      run: flake8 .
+      run: poetry install
     - name: Run tests
-      run: pipenv run nosetests --with-doctest tests
+      run: poetry run pytest tests
       env:
+        PYTHONPATH: src
         DISCOURSE_API_KEY: _
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+          python-version: '3.13'
+    - uses: pre-commit/action@v3.0.1
 
   build:
     needs: tests

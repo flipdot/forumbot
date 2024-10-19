@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y locales git
 # Set german locale
@@ -8,16 +8,16 @@ ENV LANGUAGE de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 RUN locale-gen de_DE.UTF-8
 
-RUN pip install pipenv
+RUN pip install poetry==1.8.4
 
-COPY Pipfile /app/
-COPY Pipfile.lock /app/
+COPY pyproject.toml /app/
+COPY poetry.lock /app/
 
 WORKDIR  /app
-RUN pipenv sync
+RUN poetry install
 
 COPY src /app/src
 COPY templates /app/templates
 
-ENTRYPOINT ["pipenv", "run"]
+ENTRYPOINT ["poetry", "run"]
 CMD python src/app.py

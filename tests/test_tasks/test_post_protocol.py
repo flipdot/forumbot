@@ -122,17 +122,37 @@ siehe Forum
 - Thema wurde nicht besprochen
 """
         expected_1 = {
-            'topics': [
-                {'title': 'Wichtige Dinge', 'author': 'jemandem', 'was_discussed': True},
-                {'title': 'Weniger wichtige Dinge', 'author': 'unwichtig', 'was_discussed': False},
+            "topics": [
+                {
+                    "title": "Wichtige Dinge",
+                    "author": "jemandem",
+                    "was_discussed": True,
+                },
+                {
+                    "title": "Weniger wichtige Dinge",
+                    "author": "unwichtig",
+                    "was_discussed": False,
+                },
             ]
         }
         expected_2 = expected_1
         expected_3 = {
-            'topics': [
-                {'title': 'Nächsten Monat ist etwas!', 'author': 'someone', 'was_discussed': True},
-                {'title': 'Dingens Anfrage', 'author': 'someone', 'was_discussed': True},
-                {'title': 'Postfach com@flipdot.org', 'author': None, 'was_discussed': False},
+            "topics": [
+                {
+                    "title": "Nächsten Monat ist etwas!",
+                    "author": "someone",
+                    "was_discussed": True,
+                },
+                {
+                    "title": "Dingens Anfrage",
+                    "author": "someone",
+                    "was_discussed": True,
+                },
+                {
+                    "title": "Postfach com@flipdot.org",
+                    "author": None,
+                    "was_discussed": False,
+                },
             ]
         }
         self.assertEqual(parse_protocol(markdown_1), expected_1)
