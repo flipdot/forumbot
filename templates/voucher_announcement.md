@@ -21,8 +21,8 @@ Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch 
 
 Das ist die Liste der Interessenten:
 
-{% for name in queue %}
-  - {{ name }}
+{% for item in queue %}
+  - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
 {%- endfor %}
 
 ## Du hast eine Liste mit allen Vouchern?
@@ -43,8 +43,8 @@ Der Verkauf ist im Gange! Wir haben folgende Voucher:
 ## Warteliste
 
 Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle einen Voucher weitergibt
-{% for name in queue %}
-  - {{ name }}
+{% for item in queue %}
+  - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
 {%- endfor %}
 {% elif sale_over %}
 Der Voucher-Verkauf ist vorbei. Vielleicht gibt es noch einen öffentlichen Verkauf, ohne Voucher.

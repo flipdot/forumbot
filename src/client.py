@@ -76,7 +76,7 @@ class DiscourseStorage:
                 data,
                 title=f"STORAGE_{key}",
                 archetype="private_message",
-                target_usernames=self.client.api_username,
+                target_recipients=self.client.api_username,
             )
             self._storage_ids[key] = res.get("topic_id"), res.get("id")
         else:

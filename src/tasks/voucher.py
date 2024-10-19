@@ -24,9 +24,43 @@ VoucherConfig = List[VoucherConfigElement]
 
 
 def private_message_handler(client: DiscourseStorageClient, topic, posts) -> None:
-    if "voucher" not in topic["title"].lower():
-        return
     posts_content = " ".join(p["cooked"] for p in posts["post_stream"]["posts"])
+
+    bedarf_strings = ["voucher-bedarf", "voucherbedarf", "voucher bedarf"]
+
+    if any(s in posts_content.lower() for s in bedarf_strings):
+        # We received a message with a voucher request
+        persons = re.search(r"\d+", posts_content)
+        if not persons:
+            persons = 1
+        else:
+            persons = int(persons[0])
+
+        data = client.storage.get("voucher")
+        queue = data.get("queue", [])
+        name = posts["post_stream"]["posts"][0]["username"]
+
+        # Search for the user in the queue, update the number of persons
+        for entry in queue:
+            if entry["name"] == name:
+                entry["persons"] = persons
+                break
+        else:
+            queue.append(
+                {
+                    "name": name,
+                    "persons": persons,
+                }
+            )
+        client.storage.put("voucher", data)
+        # send a confirmation to the user
+        client.create_post(
+            "Alles klar! Ich habe dich in die Liste aufgenommen.",
+            topic_id=topic["id"],
+        )
+
+    if "voucher-liste" not in topic["title"].lower():
+        return
     received_voucher = set(re.findall(r"CHAOS[a-zA-Z0-9]+", posts_content))
     # Maybe something just looked like a voucher. If we find more than 3, we probably really received some:
     if len(received_voucher) > 3:
@@ -66,7 +100,8 @@ def get_username(voucher: VoucherConfigElement) -> Optional[str]:
 
 
 def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
-    assert not voucher["message_id"], "Wanted to send a voucher, again"
+    if voucher["message_id"]:
+        raise ValueError("Voucher already sent")
     username = get_username(voucher)
     message_content = render("voucher_message.md", voucher=voucher)
     logging.info(f"Sending voucher to {username}")
@@ -127,22 +162,35 @@ def get_topic(title: str, topics):
     return None
 
 
-def create_voucher_topic(client: DiscourseClient, current_year: int) -> None:
-    title = f"Congress Voucher {current_year}"
+def create_voucher_topic(client: DiscourseStorageClient, title: str) -> None:
     logging.info(f"Creating new voucher topic: {title}")
 
     category_id = constants.CATEGORY_ID_MAPPING[constants.CCC_CATEGORY_NAME]
-    client.create_post(render_post_content(), category_id=category_id, title=title)
+
+    key = f"voucher_thread_for_{datetime.now().year}_created"
+    if client.storage.get(key):
+        # failsafe: we should not create the thread twice,
+        # and not accidentally overwrite the voucher list
+        raise ValueError("Voucher thread already created")
+    client.storage.put("voucher", {"voucher": [], "queue": []})
+
+    content = render_post_content(client.storage.get("voucher"))
+    client.create_post(content, category_id=category_id, title=title)
+    client.storage.put(key, "Storage for this year was created")
 
 
-def update_voucher_topic(client: DiscourseClient, post_id: int) -> None:
-    client.update_post(post_id, render_post_content())
+def update_voucher_topic(client: DiscourseStorageClient, post_id: int) -> None:
+    content = render_post_content(client.storage.get("voucher"))
+    client.update_post(post_id, content)
 
 
-def render_post_content() -> str:
-    vouchers = []
-    queue = [] + [
-        "*Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*"
+def render_post_content(data: dict) -> str:
+    vouchers = data.get("voucher", [])
+    queue = data.get("queue", []) + [
+        {
+            "name": "*Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*",
+            "persons": 1,
+        }
     ]
     return render(
         "voucher_announcement.md",
@@ -160,12 +208,17 @@ def main(client: DiscourseStorageClient) -> None:
 
     topics = client.category_topics(constants.CCC_CATEGORY_NAME)["topic_list"]["topics"]
 
-    if topic := get_topic(f"Congress Voucher {now.year}", topics):
+    # assuming the number increases by one each year and
+    # that we don't get another pandemic
+    congress_number = now.year - 1986
+    title = f"Voucher {congress_number}C3"
+
+    if topic := get_topic(title, topics):
         topic_posts = client.topic_posts(topic["id"])
         post = topic_posts["post_stream"]["posts"][0]
         update_voucher_topic(client, post["id"])
     else:
-        create_voucher_topic(client, now.year)
+        create_voucher_topic(client, title)
 
     return
 

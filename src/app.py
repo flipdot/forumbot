@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+from datetime import datetime
 from typing import Optional
 
 from client import DiscourseClient, DiscourseStorageClient
@@ -58,13 +59,19 @@ def disable_request(
 
 
 def fetch_unread_messages(client: DiscourseStorageClient):
+    if datetime.now().month not in [10, 11, 12]:
+        # PN feature currently only used for voucher distribution.
+        # Voucher distribution is only relevant in october, november and maybe december
+        return
+
     # TODO: Something is still wrong about the unseen thingy. Dunno when it get's set.
     topics = [
         t for t in client.private_messages()["topic_list"]["topics"] if t["unseen"]
     ]
     for topic in topics:
         posts = client.topic_posts(topic["id"])
-        tasks.distribute_voucher.private_message_handler(client, topic, posts)
+        if datetime.now().month in [10, 11, 12]:
+            tasks.voucher.private_message_handler(client, topic, posts)
 
 
 def schedule_jobs(client: DiscourseStorageClient) -> None:
@@ -73,8 +80,11 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at("12:37").do(tasks.plenum.remind.main, client)
     schedule.every().day.at("20:00").do(tasks.plenum.post_protocol.main, client)
 
-    schedule.every(30).seconds.do(fetch_unread_messages, client)
-    schedule.every().minute.do(tasks.distribute_voucher.main, client)
+    # schedule.every(30).seconds.do(fetch_unread_messages, client)
+    # schedule.every().minute.do(tasks.voucher.main, client)
+
+    schedule.every(15).seconds.do(fetch_unread_messages, client)
+    schedule.every(15).seconds.do(tasks.voucher.main, client)
 
     fetch_unread_messages(client)
 
