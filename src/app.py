@@ -68,7 +68,9 @@ def fetch_unread_messages(client: DiscourseStorageClient):
     topics = [
         t
         for t in client.private_messages()["topic_list"]["topics"]
-        if t["unseen"] or t["highest_post_number"] > t["last_read_post_number"]
+        if t["unseen"]
+        or t["last_read_post_number"] is None
+        or t["highest_post_number"] > t["last_read_post_number"]
     ]
     for topic in topics:
         posts = client.topic_posts(topic["id"])
