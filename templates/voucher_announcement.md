@@ -19,7 +19,7 @@ Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch 
   Wenn du also z.B. für dich und einen Freund je ein Ticket benötigst, schreibe "*VOUCHER-BEDARF: 2*"
 - Ich setze dich auf die Interessentenliste und informiere dich, sobald ein Voucher für dich verfügbar ist
 
-Das ist die Liste der Interessenten:
+Das ist die Liste der **insgesamt {{ total_persons_in_queue }}** Interessenten:
 
 {% for item in queue %}
   - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}

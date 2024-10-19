@@ -186,16 +186,18 @@ def update_voucher_topic(client: DiscourseStorageClient, post_id: int) -> None:
 
 def render_post_content(data: dict) -> str:
     vouchers = data.get("voucher", [])
-    queue = data.get("queue", []) + [
-        {
-            "name": "*Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*",
-            "persons": 1,
-        }
-    ]
+    queue = data.get("queue", [])
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
-        queue=queue,
+        queue=queue
+        + [
+            {
+                "name": "*Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*",
+                "persons": 1,
+            }
+        ],
+        total_persons_in_queue=sum([entry["persons"] for entry in queue]),
     )
 
 
