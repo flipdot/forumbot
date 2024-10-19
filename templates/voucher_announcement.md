@@ -31,23 +31,24 @@ Ich übernehme die Verteilung! **Schick mir eine PN** mit dem Titel **VOUCHER-LI
 Pack alle Voucher die du hast in eine einzige Nachricht!
 Wenn ich deine Nachricht verstehen konnte, schreibe ich dir zurück und aktualisiere diesen Post.
 
-{% elif sale_started %}
-Der Verkauf ist im Gange! Wir haben folgende Voucher:
+{% else %}
+Wir haben {{ vouchers | length }} Voucher bekommen! Hier sind sie:
 
 | Voucher | Aktuell bei | seit | Für n Personen |
 | ------- | ----------- | ---- | -------------- |
 {% for voucher in vouchers -%}
 | #{{ loop.index }} | {{ voucher.owner or '' }} | {{ voucher.received.strftime('%c') if voucher.received else '' }} | {{ voucher.persons or '' }} |
-{% endfor -%}
+{% endfor %}
+
+Du bist oben in der Liste? Dann hast du eine PN von mir bekommen! **Bitte kaufe schnellstmöglich deine Tickets!** https://tickets.events.ccc.de/
 
 ## Warteliste
+
+Ich habe die Bedarfsliste **zufällig** gemischt, und daraus diese Warteliste gebaut.
+Wenn du dich zur Bedarfsbestimmung nicht gemeldet hast, kannst du dich noch immer ans Ende der Liste setzen lassen.
 
 Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle einen Voucher weitergibt
 {% for item in queue %}
   - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
 {%- endfor %}
-{% elif sale_over %}
-Der Voucher-Verkauf ist vorbei. Vielleicht gibt es noch einen öffentlichen Verkauf, ohne Voucher.
-
-Ich drück dir die Daumen! Ansonsten wünsche ich allen Beteiligten viel Spaß und ich melde mich nächstes Jahr wieder :)
 {% endif %}

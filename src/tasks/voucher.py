@@ -214,6 +214,7 @@ def update_voucher_topic(client: DiscourseStorageClient, post_id: int) -> None:
 def render_post_content(data: dict) -> str:
     vouchers = data.get("voucher", [])
     queue = data.get("queue", [])
+
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
