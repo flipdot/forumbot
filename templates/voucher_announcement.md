@@ -4,23 +4,26 @@ ich bin der Voucherbot für den Congress. Der Congress ist immer im Dezember zwi
 
 Wir haben bereits Oktober. Erfahrungsgemäß beginnt im Oktober die Verteilung der Voucher.
 
-Ein Voucher ermöglicht euch, ein Ticket zu erwerben. In den letzten Jahre wurde es in der Regel so gehandhabt,
-dass ein Voucher nach Bezahlung einen weiteren Voucher generiert. So werden die Voucher von Person zu Person
-in Form einer Kette weitergegeben.
+Ein Voucher ermöglicht euch, ein Ticket zu erwerben. In den letzten Jahre wurde es in der Regel so gehandhabt, dass ein Voucher nach Bezahlung einen weiteren Voucher generiert. So werden die Voucher von Person zu Person in Form einer Kette weitergegeben.
 
-Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch Interesse an einem Voucher habt!
-
-# Bedarfsermittlung
-
-- **Schreib mir eine PN** mit dem Titel **VOUCHER-BEDARF**
-- Schreibe in deine Nachricht **Personen: X**, wobei das X für die *Gesamtzahl* Personen steht, für die du ein Ticket kaufen willst.
-  Wenn du also z.B. für dich und einen Freund je ein Ticket benötigst, schreibe *Personen: 2*
-
+Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch Interesse an einem Voucher hat!
 
 # Status
 
-{% if waiting_for_vouchers %}
-Ich habe noch keine Voucherliste erhalten. Hoffentlich hat der Verkauf noch nicht begonnen.
+{% if not vouchers %}
+
+## Bedarfsermittlung
+
+- **Schreib mir eine PN**
+- Schreibe in deine Nachricht **VOUCHER-BEDARF: X**, wobei das X für die *Gesamtzahl* Personen steht, für die du ein Ticket kaufen willst.
+  Wenn du also z.B. für dich und einen Freund je ein Ticket benötigst, schreibe "*VOUCHER-BEDARF: 2*"
+- Ich setze dich auf die Interessentenliste und informiere dich, sobald ein Voucher für dich verfügbar ist
+
+Das ist die Liste der Interessenten:
+
+{% for name in queue %}
+  - {{ name }}
+{%- endfor %}
 
 ## Du hast eine Liste mit allen Vouchern?
 

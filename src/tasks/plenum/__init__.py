@@ -3,15 +3,11 @@ import re
 from datetime import datetime, timedelta
 from itertools import count
 from typing import Tuple, List
-from constants import DEBUG
+from constants import DEBUG, CATEGORY_ID_MAPPING
 
 PAD_BASE_URL = os.getenv("PAD_BASE_URL", "").rstrip("/") or "https://pad.flipdot.org"
 PROTOCOL_PLACEHOLDER = "PROTOCOL_PLACEHOLDER"
 
-CATEGORY_ID_MAPPING = {
-    "orga/plena": os.environ.get("CATEGORY_ID_PLENUM", 23),
-    "test": 24,
-}
 PLENUM_CATEGORY_NAME = "test" if DEBUG else "orga/plena"
 
 

@@ -3,6 +3,8 @@ import re
 from datetime import datetime, timedelta
 
 from pydiscourse import DiscourseClient
+
+import constants
 from client import DiscourseStorageClient
 
 # custom types
@@ -118,7 +120,55 @@ def check_for_returned_voucher(
 #     sys.exit()
 
 
+def get_topic(title: str, topics):
+    for t in topics:
+        if title == t["title"]:
+            return t
+    return None
+
+
+def create_voucher_topic(client: DiscourseClient, current_year: int) -> None:
+    title = f"Congress Voucher {current_year}"
+    logging.info(f"Creating new voucher topic: {title}")
+
+    category_id = constants.CATEGORY_ID_MAPPING[constants.CCC_CATEGORY_NAME]
+    client.create_post(render_post_content(), category_id=category_id, title=title)
+
+
+def update_voucher_topic(client: DiscourseClient, post_id: int) -> None:
+    client.update_post(post_id, render_post_content())
+
+
+def render_post_content() -> str:
+    vouchers = []
+    queue = [] + [
+        "*Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*"
+    ]
+    return render(
+        "voucher_announcement.md",
+        vouchers=vouchers,
+        queue=queue,
+    )
+
+
 def main(client: DiscourseStorageClient) -> None:
+    # voucher only relevant in october, november and maybe december
+    now = datetime.now()
+    if now.month not in [10, 11, 12]:
+        logging.info("Not voucher season")
+        return
+
+    topics = client.category_topics(constants.CCC_CATEGORY_NAME)["topic_list"]["topics"]
+
+    if topic := get_topic(f"Congress Voucher {now.year}", topics):
+        topic_posts = client.topic_posts(topic["id"])
+        post = topic_posts["post_stream"]["posts"][0]
+        update_voucher_topic(client, post["id"])
+    else:
+        create_voucher_topic(client, now.year)
+
+    return
+
     data = client.storage.get("voucher")
     for voucher in data.get("voucher", []):
         if not voucher["owner"]:
