@@ -52,7 +52,7 @@ Execute tests:
 Start by copying `src/tasks/hello_world.py`. You can run your new task directly:
 
     python src/app.py --dry --run_task hello_world
-    
+
 ...where "hello_world" is the name of the python file.
 
 Modify the `main()` function:

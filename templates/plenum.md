@@ -7,7 +7,7 @@ Putzen: 19:30
 
 Das Plenum findet vor Ort in den Räumen des flipdot e.V. statt.
 
-Wir sammeln und protokollieren auf dem [Pad]({{ pad_url }}). Nach dem Plenum werde ich den Inhalt des Pads hier einfügen. 
+Wir sammeln und protokollieren auf dem [Pad]({{ pad_url }}). Nach dem Plenum werde ich den Inhalt des Pads hier einfügen.
 
 # Ergebnisprotokoll
 
