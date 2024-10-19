@@ -4,12 +4,14 @@ unter https://tickets.events.ccc.de kannst du dir dein Ticket kaufen. Nutze daf�
 
 {{ voucher.voucher }}
 
-Nachdem du dein Ticket bezahlt hast, wirst du einen neuen Voucher erhalten. Reiche diesen an deine Freunde weiter.
+- **Bezahle** dein Ticket **sofort** nach Bestellung
+- Es gibt **einen neuen Voucher** nach Bezahlung
+- **Sende den neuen Voucher** an mich zurück, damit ich ihn weitergeben kann
 
-Wenn du alle deine Leute versorgt hast, **sende den letzten Voucher als Antwort auf diese Nachricht** an mich zurück! Lasse also bitte keinen Voucher unbenutzt liegen.
+Solltest du nicht ASAP bestellen und bezahlen können, schicke den Voucher bitte an mich zurück.
+Andernfalls warten andere vergeblich auf ihre Chance, sich ein Ticket kaufen zu können. Das wäre schade.
 
-Schau bitte auch [im Thread](https://forum.flipdot.org/t/voucher-36c3/3432/4) nach, ob für andere Menschen Voucher verfügbar sind. Sind sie es nicht, und du oder deine Freunde kommt gerade nicht dazu, die Bestellung **abzuschließen**, gib ihn wieder zurück! Einfach als Antwort den Voucher zurückschicken (und nicht schreiben "gib ihn wem anders", sondern den Voucher wirklich kopieren. Ich bin schließlich ein dummer Bot).
 {% if voucher.old_owner %}
-Falls es Probleme mit dem Voucher gibt, wende dich bitte an @{{ voucher.old_owner }}
+Falls es Probleme mit dem Voucher gibt, wende dich bitte an @{{ voucher.old_owner }}. Von dieser Person stammt der Voucher.
 {% endif %}
-Danke und viel Spaß beim 36C3!
+Danke und viel Spaß beim nächsten Congress!

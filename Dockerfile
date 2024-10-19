@@ -8,10 +8,10 @@ ENV LANGUAGE de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 RUN locale-gen de_DE.UTF-8
 
-RUN pip install pipenv
+RUN pip install poetry==1.8.4
 
-COPY Pipfile /app/
-COPY Pipfile.lock /app/
+COPY pyproject.toml /app/
+COPY poetry.lock /app/
 
 WORKDIR  /app
 RUN pipenv sync

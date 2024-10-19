@@ -104,7 +104,7 @@ def check_for_returned_voucher(client: DiscourseClient, voucher: VoucherConfigEl
 
 def main(client: DiscourseStorageClient) -> None:
     data = client.storage.get('voucher')
-    for voucher in data.get('voucher'):
+    for voucher in data.get('voucher', []):
         if not voucher['owner']:
             queue = data.get('queue')
             if not queue or type(queue) is not list:
@@ -126,7 +126,7 @@ def main(client: DiscourseStorageClient) -> None:
         elif voucher['owner']:
             send_voucher_to_user(client, voucher)
 
-    post_content = render('voucher_table.md', vouchers=data.get('voucher'), queue=data.get('queue'))
+    post_content = render('voucher_table.md', vouchers=data.get('voucher', []), queue=data.get('queue', []))
     # TODO: voucher_table_post_id does not get saved. We need to create a post as soon as we received the voucher list
     client.update_post(data.get('voucher_table_post_id'), post_content)
 

@@ -7,7 +7,7 @@ import mistune
 import numpy as np
 
 from client import DiscourseStorageClient
-from tasks.plenum import get_next_plenum_date, PROTOCOL_PLACEHOLDER, DISCOURSE_CATEGORY_NAME
+from tasks.plenum import get_next_plenum_date, PROTOCOL_PLACEHOLDER, PLENUM_CATEGORY_NAME
 from utils import render
 
 
@@ -51,7 +51,7 @@ def main(client: DiscourseStorageClient) -> None:
         logging.info('Today was no plenum. Aborting.')
         return
     title = plenum_date.strftime('%Y-%m-%d Plenum')
-    topics = [x for x in client.category_topics(DISCOURSE_CATEGORY_NAME)['topic_list']['topics'] if x['title'] == title]
+    topics = [x for x in client.category_topics(PLENUM_CATEGORY_NAME)['topic_list']['topics'] if x['title'] == title]
 
     if not topics:
         logging.info(f'"{title}" does not exist, can\'t post protocol. Aborting.')

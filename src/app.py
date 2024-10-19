@@ -6,15 +6,25 @@ from typing import Optional
 from client import DiscourseClient, DiscourseStorageClient
 from pydiscourse.exceptions import DiscourseClientError
 
-from constants import DISCOURSE_CREDENTIALS
+from constants import DISCOURSE_CREDENTIALS, SENTRY_DSN
 from time import sleep
 
 import locale
 import schedule
-import tasks.distribute_voucher
+import tasks.voucher
 import tasks.plenum.announce
 import tasks.plenum.remind
 import tasks.plenum.post_protocol
+
+import sentry_sdk
+
+import logging
+
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO
+)
+
+sentry_sdk.init(dsn=SENTRY_DSN)
 
 locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 
@@ -54,11 +64,10 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at('12:37').do(tasks.plenum.remind.main, client)
     schedule.every().day.at('20:00').do(tasks.plenum.post_protocol.main, client)
 
-    # Disable voucherbot
-    # schedule.every(30).seconds.do(fetch_unread_messages, client)
-    # schedule.every().minute.do(tasks.distribute_voucher.main, client)
+    schedule.every(30).seconds.do(fetch_unread_messages, client)
+    schedule.every().minute.do(tasks.distribute_voucher.main, client)
 
-    # fetch_unread_messages(client)
+    fetch_unread_messages(client)
 
 
 def main():
