@@ -20,8 +20,9 @@ jobs:
     - name: Install dependencies
       run: poetry install
     - name: Run tests
-      run: poetry run nosetests --with-doctest tests
+      run: poetry run pytest tests
       env:
+        PYTHONPATH: src
         DISCOURSE_API_KEY: _
 
   pre-commit:
