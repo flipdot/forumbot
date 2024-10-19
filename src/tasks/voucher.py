@@ -218,13 +218,7 @@ def render_post_content(data: dict) -> str:
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
-        queue=queue
-        + [
-            {
-                "name": "*Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*",
-                "persons": 1,
-            }
-        ],
+        queue=queue,
         total_persons_in_queue=sum([entry["persons"] for entry in queue]),
     )
 

@@ -24,6 +24,7 @@ Das ist die Liste der **insgesamt {{ total_persons_in_queue }}** Interessenten:
 {% for item in queue %}
   - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
 {%- endfor %}
+  - *Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*
 
 ## Du hast eine Liste mit allen Vouchern?
 
@@ -51,4 +52,5 @@ Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle einen Vouc
 {% for item in queue %}
   - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
 {%- endfor %}
+  - *Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*
 {% endif %}
