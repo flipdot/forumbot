@@ -1,6 +1,8 @@
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
+from venv import logger
+import random
 
 from pydiscourse import DiscourseClient
 
@@ -23,75 +25,100 @@ VoucherConfigElement = Dict
 VoucherConfig = List[VoucherConfigElement]
 
 
+def handle_private_message_bedarf(
+    client: DiscourseStorageClient, topic, posts, posts_content
+):
+    persons = re.search(r"\d+", posts_content)
+    if not persons:
+        persons = 1
+    else:
+        persons = int(persons[0])
+
+    data = client.storage.get("voucher")
+    queue = data.get("queue", [])
+    name = posts["post_stream"]["posts"][0]["username"]
+
+    # Search for the user in the queue, update the number of persons
+    for entry in queue:
+        if entry["name"] == name:
+            entry["persons"] = persons
+            break
+    else:
+        queue.append(
+            {
+                "name": name,
+                "persons": persons,
+            }
+        )
+    client.storage.put("voucher", data)
+    # send a confirmation to the user
+    client.create_post(
+        "Alles klar! Ich habe dich in die Liste aufgenommen.",
+        topic_id=topic["id"],
+    )
+
+
+def handle_private_message_voucher_list(
+    client: DiscourseStorageClient, topic, posts, posts_content
+):
+    received_voucher = set(re.findall(r"CHAOS[a-zA-Z0-9]+", posts_content))
+
+    if not received_voucher:
+        logger.error("Got a voucher list, but no vouchers were found")
+        client.create_post(
+            "Es tut mir wirklich leid, aber ich konnte keine Voucher in deiner Nachricht finden. "
+            "Ich suche nach Vouchern mit diesem Regex: `CHAOS[a-zA-Z0-9]+`. "
+            "Vielleicht hat sich das Format geändert? Dann bräuchte ich ein Update.",
+            topic_id=topic["id"],
+        )
+        return
+
+    data = client.storage.get("voucher")
+
+    if data["voucher"]:
+        logger.error("Voucher list already exists. Is somebody trolling us?")
+        client.create_post(
+            "Es existiert bereits eine Voucher-Liste. Ich kann nur eine Liste verwalten.",
+            topic_id=topic["id"],
+        )
+        return
+
+    logging.info("Saving new vouchers to storage")
+    data["voucher"] = [
+        {
+            "voucher": v,
+            "owner": None,
+            "old_owner": posts["post_stream"]["posts"][0]["username"],
+            "message_id": None,
+            "persons": None,
+            "received_at": None,
+        }
+        for v in received_voucher
+    ]
+    # shuffle queue for fairness
+    random.shuffle(data["queue"])
+
+    client.storage.put("voucher", data)
+    client.create_post(
+        f"Danke für die Liste! Ich habe {len(received_voucher)} Voucher gefunden abgespeichert. "
+        f"Ich werde sie nun an die Interessenten verteilen.",
+        topic_id=topic["id"],
+    )
+
+
 def private_message_handler(client: DiscourseStorageClient, topic, posts) -> None:
-    posts_content = " ".join(p["cooked"] for p in posts["post_stream"]["posts"])
+    posts_content = posts["post_stream"]["posts"][-1]["cooked"]
 
     bedarf_strings = ["voucher-bedarf", "voucherbedarf", "voucher bedarf"]
 
     if any(s in posts_content.lower() for s in bedarf_strings):
         # We received a message with a voucher request
-        persons = re.search(r"\d+", posts_content)
-        if not persons:
-            persons = 1
-        else:
-            persons = int(persons[0])
-
-        data = client.storage.get("voucher")
-        queue = data.get("queue", [])
-        name = posts["post_stream"]["posts"][0]["username"]
-
-        # Search for the user in the queue, update the number of persons
-        for entry in queue:
-            if entry["name"] == name:
-                entry["persons"] = persons
-                break
-        else:
-            queue.append(
-                {
-                    "name": name,
-                    "persons": persons,
-                }
-            )
-        client.storage.put("voucher", data)
-        # send a confirmation to the user
-        client.create_post(
-            "Alles klar! Ich habe dich in die Liste aufgenommen.",
-            topic_id=topic["id"],
-        )
-
-    if "voucher-liste" not in topic["title"].lower():
+        handle_private_message_bedarf(client, topic, posts, posts_content)
         return
-    received_voucher = set(re.findall(r"CHAOS[a-zA-Z0-9]+", posts_content))
-    # Maybe something just looked like a voucher. If we find more than 3, we probably really received some:
-    if len(received_voucher) > 3:
-        old_storage = client.storage.get("voucher")
-        received_on = old_storage.get("received_on")
-        save_new_voucher = False
-        if not received_on:
-            # seems like we have not stored old vouchers. Overwrite them
-            save_new_voucher = True
-        if received_on:
-            now = datetime.now()
-            delta = now - received_on
-            if delta > timedelta(days=60):
-                # the last vouchers which were stored are older than 60 days. We can probably overwrite them
-                save_new_voucher = True
 
-        if save_new_voucher:
-            logging.info("Saving new vouchers to storage")
-            client.storage.put(
-                "voucher",
-                {
-                    "voucher": [
-                        {
-                            "voucher": v,
-                        }
-                        for v in received_voucher
-                    ],
-                    "received_on": datetime.now(),
-                    "queue_topic": topic["id"],
-                },
-            )
+    if "voucher-liste" in topic["title"].lower():
+        handle_private_message_voucher_list(client, topic, posts, posts_content)
+        return
 
 
 def get_username(voucher: VoucherConfigElement) -> Optional[str]:
@@ -114,7 +141,7 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
     message_id = res.get("topic_id")
     logging.info(f"Sent, message_id is {message_id}")
     voucher["message_id"] = message_id
-    voucher["received"] = datetime.now()
+    voucher["received_at"] = datetime.now()
 
 
 def send_message_to_user(
@@ -247,7 +274,7 @@ def main(client: DiscourseStorageClient) -> None:
                 voucher["old_owner"] = old_owner
                 voucher["message_id"] = None
                 voucher["persons"] = None
-                voucher["received"] = None
+                voucher["received_at"] = None
         elif voucher["owner"]:
             send_voucher_to_user(client, voucher)
 
