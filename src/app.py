@@ -73,9 +73,17 @@ def fetch_unread_messages(client: DiscourseStorageClient):
         or t["highest_post_number"] > t["last_read_post_number"]
     ]
     for topic in topics:
+        was_handled = False
         posts = client.topic_posts(topic["id"])
         if datetime.now().month in [10, 11, 12]:
-            tasks.voucher.private_message_handler(client, topic, posts)
+            was_handled = tasks.voucher.private_message_handler(client, topic, posts)
+
+        if not was_handled:
+            client.create_post(
+                "Es tut mir leid, aber ich verstehe nicht, was du möchtest. "
+                "Du kannst mir gerne in diesem Thread antworten und es nochmal probieren.",
+                topic_id=topic["id"],
+            )
 
 
 def schedule_jobs(client: DiscourseStorageClient) -> None:
@@ -84,11 +92,11 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at("12:37").do(tasks.plenum.remind.main, client)
     schedule.every().day.at("20:00").do(tasks.plenum.post_protocol.main, client)
 
-    schedule.every(30).seconds.do(fetch_unread_messages, client)
-    schedule.every().minute.do(tasks.voucher.main, client)
+    # schedule.every(30).seconds.do(fetch_unread_messages, client)
+    # schedule.every().minute.do(tasks.voucher.main, client)
 
-    # schedule.every(15).seconds.do(fetch_unread_messages, client)
-    # schedule.every(15).seconds.do(tasks.voucher.main, client)
+    schedule.every(15).seconds.do(fetch_unread_messages, client)
+    schedule.every(15).seconds.do(tasks.voucher.main, client)
 
     fetch_unread_messages(client)
 

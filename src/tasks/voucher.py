@@ -31,6 +31,8 @@ def handle_private_message_bedarf(
 ):
     persons = re.search(r"\d+", posts_content)
     if not persons:
+        persons = re.search(r"\d+", topic["title"])
+    if not persons:
         persons = 1
     else:
         persons = int(persons[0])
@@ -54,7 +56,7 @@ def handle_private_message_bedarf(
     client.storage.put("voucher", data)
     # send a confirmation to the user
     client.create_post(
-        "Alles klar! Ich habe dich in die Liste aufgenommen.",
+        f"Alles klar! Ich habe dich für {persons} Voucher vorgemerkt.",
         topic_id=topic["id"],
     )
 
@@ -167,14 +169,16 @@ def handle_private_message_voucher_list(
     )
 
 
-def private_message_handler(client: DiscourseStorageClient, topic, posts) -> None:
+def private_message_handler(client: DiscourseStorageClient, topic, posts) -> bool:
     posts_content = posts["post_stream"]["posts"][-1]["cooked"]
 
     bedarf_strings = ["voucher-bedarf", "voucherbedarf", "voucher bedarf"]
 
-    if any(s in posts_content.lower() for s in bedarf_strings):
+    if any(s in posts_content.lower() for s in bedarf_strings) or any(
+        s in topic["title"].lower() for s in bedarf_strings
+    ):
         handle_private_message_bedarf(client, topic, posts, posts_content)
-        return
+        return True
 
     gesamtbedarf_strings = [
         "voucher-gesamt-bedarf",
@@ -185,7 +189,7 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> Non
 
     if any(s in posts_content.lower() for s in gesamtbedarf_strings):
         handle_private_message_gesamtbedarf(client, topic, posts, posts_content)
-        return
+        return True
 
     voucher_list_strings = [
         "voucher-list",
@@ -195,7 +199,7 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> Non
 
     if any(s in topic["title"].lower() for s in voucher_list_strings):
         handle_private_message_voucher_list(client, topic, posts, posts_content)
-        return
+        return True
 
 
 def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
