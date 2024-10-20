@@ -59,6 +59,57 @@ def handle_private_message_bedarf(
     )
 
 
+def handle_private_message_gesamtbedarf(
+    client: DiscourseStorageClient, topic, posts, posts_content
+):
+    persons = re.search(r"\d+", posts_content)
+    if not persons:
+        client.create_post(
+            "Ich konnte keine Anzahl an Personen in deiner Nachricht finden. "
+            "Bitte gib an, wie viele Personen du den Organisatoren mitgeteilt hast.",
+            topic_id=topic["id"],
+        )
+        return
+
+    persons = int(persons[0])
+    data = client.storage.get("voucher")
+    if data.get("voucher"):
+        client.create_post(
+            "Wir haben doch schon Voucher erhalten. Ist jetzt ein bisschen spät für ne Abschätzung.",
+            topic_id=topic["id"],
+        )
+        return
+    if data.get("total_persons_reported"):
+        client.create_post(
+            "Es wurde bereits eine Anzahl an Personen gemeldet.",
+            topic_id=topic["id"],
+        )
+        return
+    data["total_persons_reported"] = persons
+
+    # shuffle queue for fairness
+    random.shuffle(data.get("queue", []))
+
+    client.storage.put("voucher", data)
+    client.create_post(
+        f"Danke für die Information! Ich schreibe in meinen Post, dass du {persons} Personen "
+        f"an die Congress Organisation gemeldet hast.",
+        topic_id=topic["id"],
+    )
+    username = posts["post_stream"]["posts"][0]["username"]
+    post_content = render(
+        "voucher_gesamtbedarf_reported.md",
+        reported_by=username,
+        persons=persons,
+        bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
+    )
+
+    client.create_post(
+        post_content,
+        topic_id=data["voucher_topics"][get_congress_id()],
+    )
+
+
 def handle_private_message_voucher_list(
     client: DiscourseStorageClient, topic, posts, posts_content
 ):
@@ -85,25 +136,34 @@ def handle_private_message_voucher_list(
         return
 
     logging.info("Saving new vouchers to storage")
+    username = posts["post_stream"]["posts"][0]["username"]
     data["voucher"] = [
         {
             "voucher": v,
             "owner": None,
-            "old_owner": posts["post_stream"]["posts"][0]["username"],
+            "old_owner": username,
             "message_id": None,
             "persons": None,
             "received_at": datetime.now(),
         }
         for v in received_voucher
     ]
-    # shuffle queue for fairness
-    random.shuffle(data["queue"])
 
     client.storage.put("voucher", data)
     client.create_post(
         f"Danke für die Liste! Ich habe {len(received_voucher)} Voucher gefunden abgespeichert. "
         f"Ich werde sie nun an die Interessenten verteilen.",
         topic_id=topic["id"],
+    )
+    post_content = render(
+        "voucher_list_received.md",
+        reported_by=username,
+        total_voucher=len(received_voucher),
+        bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
+    )
+    client.create_post(
+        post_content,
+        topic_id=data["voucher_topics"][get_congress_id()],
     )
 
 
@@ -113,11 +173,27 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> Non
     bedarf_strings = ["voucher-bedarf", "voucherbedarf", "voucher bedarf"]
 
     if any(s in posts_content.lower() for s in bedarf_strings):
-        # We received a message with a voucher request
         handle_private_message_bedarf(client, topic, posts, posts_content)
         return
 
-    if "voucher-liste" in topic["title"].lower():
+    gesamtbedarf_strings = [
+        "voucher-gesamt-bedarf",
+        "voucher-gesamtbedarf",
+        "voucher gesamt bedarf",
+        "voucher gesamtbedarf",
+    ]
+
+    if any(s in posts_content.lower() for s in gesamtbedarf_strings):
+        handle_private_message_gesamtbedarf(client, topic, posts, posts_content)
+        return
+
+    voucher_list_strings = [
+        "voucher-list",
+        "voucherlist",
+        "voucher list",
+    ]
+
+    if any(s in topic["title"].lower() for s in voucher_list_strings):
         handle_private_message_voucher_list(client, topic, posts, posts_content)
         return
 
@@ -167,19 +243,6 @@ def check_for_returned_voucher(
         return new_voucher[0]
 
 
-# TODO: think hard about maintaining the correct state. Not like this.
-# def update_queue(client: DiscourseStorageClient):
-#     data = client.storage.get('voucher')
-#     topic_id = data.get('queue_topic')
-#     queue_posts = [p for p in client.posts(topic_id)['post_stream']['posts'][0:] if not p['yours']]
-#     for post in queue_posts:
-#         pprint(post)
-#         usernames = re.findall(r'@([^ ]+)', post['cooked'])
-#         print(usernames)
-#     import sys
-#     sys.exit()
-
-
 def get_topic(title: str, topics):
     for t in topics:
         if title == t["title"]:
@@ -187,31 +250,37 @@ def get_topic(title: str, topics):
     return None
 
 
-def create_voucher_topic(client: DiscourseStorageClient, title: str) -> None:
+def create_voucher_topic(
+    client: DiscourseClient,
+    data: dict,
+    title: str,
+    congress_id: str,
+) -> None:
     logging.info(f"Creating new voucher topic: {title}")
 
     category_id = constants.CATEGORY_ID_MAPPING[constants.CCC_CATEGORY_NAME]
 
-    key = f"voucher_thread_for_{datetime.now().year}_created"
-    if client.storage.get(key):
-        # failsafe: we should not create the thread twice,
-        # and not accidentally overwrite the voucher list
-        raise ValueError("Voucher thread already created")
-    client.storage.put("voucher", {"voucher": [], "queue": []})
+    data["voucher"] = []
+    data["queue"] = []
+    if "voucher_topics" not in data:
+        data["voucher_topics"] = {}
 
-    content = render_post_content(client.storage.get("voucher"))
-    client.create_post(content, category_id=category_id, title=title)
-    client.storage.put(key, "Storage for this year was created")
+    content = render_post_content(data)
+    res = client.create_post(content, category_id=category_id, title=title)
+    topic_id = res["topic_id"]
+
+    data["voucher_topics"][congress_id] = topic_id
 
 
-def update_voucher_topic(client: DiscourseStorageClient, post_id: int) -> None:
-    content = render_post_content(client.storage.get("voucher"))
+def update_voucher_topic(client: DiscourseClient, data: dict, post_id: int) -> None:
+    content = render_post_content(data)
     client.update_post(post_id, content)
 
 
 def render_post_content(data: dict) -> str:
     vouchers = data.get("voucher", [])
     queue = data.get("queue", [])
+    total_persons_reported = data.get("total_persons_reported")
 
     now = datetime.now()
     for v in vouchers:
@@ -227,6 +296,7 @@ def render_post_content(data: dict) -> str:
         vouchers=vouchers,
         queue=queue,
         total_persons_in_queue=sum([entry["persons"] for entry in queue]),
+        total_persons_reported=total_persons_reported,
         bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
     )
 
@@ -269,6 +339,15 @@ def process_voucher_distribution(client: DiscourseStorageClient):
     client.storage.put("voucher", data)
 
 
+def get_congress_id(now: datetime | None = None) -> str:
+    # assuming the number increases by one each year and
+    # that we don't get another pandemic
+    if not now:
+        now = datetime.now()
+    congress_number = now.year - 1986
+    return f"{congress_number}C3"
+
+
 def main(client: DiscourseStorageClient) -> None:
     # voucher only relevant in october, november and maybe december
     now = datetime.now()
@@ -280,14 +359,25 @@ def main(client: DiscourseStorageClient) -> None:
 
     topics = client.category_topics(constants.CCC_CATEGORY_NAME)["topic_list"]["topics"]
 
-    # assuming the number increases by one each year and
-    # that we don't get another pandemic
-    congress_number = now.year - 1986
-    title = f"Voucher {congress_number}C3"
+    congress_id = get_congress_id(now)
+    title = f"Voucher {congress_id}"
 
-    if topic := get_topic(title, topics):
-        topic_posts = client.topic_posts(topic["id"])
+    data = client.storage.get("voucher", {})
+    if "voucher_topics" not in data:
+        data["voucher_topics"] = {}
+    voucher_topics = data["voucher_topics"]
+    topic_id = voucher_topics.get(congress_id)
+
+    if not topic_id:
+        if topic := get_topic(title, topics):
+            voucher_topics[congress_id] = topic["id"]
+            topic_id = topic["id"]
+
+    if topic_id:
+        topic_posts = client.topic_posts(topic_id)
         post = topic_posts["post_stream"]["posts"][0]
-        update_voucher_topic(client, post["id"])
+        update_voucher_topic(client, data, post["id"])
     else:
-        create_voucher_topic(client, title)
+        create_voucher_topic(client, data, title, congress_id)
+
+    client.storage.put("voucher", data)

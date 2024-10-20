@@ -12,6 +12,8 @@ Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch 
 
 {% if not vouchers %}
 
+{% if not total_persons_reported %}
+
 ## Bedarfsermittlung
 
 - **Schreib mir eine PN**
@@ -21,10 +23,24 @@ Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch 
 
 Das ist die Liste der **insgesamt {{ total_persons_in_queue }}** Interessenten:
 
+{% else %}
+
+Wir haben an die CCC Organisatoren gemeldet, dass unser **Bedarf bei {{ total_persons_reported }} Personen** liegt.
+
+Jetzt warten wir darauf, dass wir Voucher erhalten.
+
+## Warteliste ({{ total_persons_in_queue }})
+
+Die Bedarfsliste wurde **zufällig gemischt**, und daraus diese **Warteliste** erstellt.
+Wenn du dich zur Bedarfsbestimmung nicht gemeldet hast, kannst du dich noch immer **ans Ende** der Liste setzen lassen.
+
+{% endif %}
+
 {% for item in queue %}
   - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
 {%- endfor %}
-  - *Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*
+  - *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
+
 
 ## Du hast eine Liste mit allen Vouchern?
 
@@ -45,12 +61,12 @@ Du bist oben in der Liste? Dann hast du eine PN von mir bekommen! **Bitte kaufe 
 
 ## Warteliste
 
-Ich habe die Bedarfsliste **zufällig** gemischt, und daraus diese Warteliste gebaut.
-Wenn du dich zur Bedarfsbestimmung nicht gemeldet hast, kannst du dich noch immer ans Ende der Liste setzen lassen.
+Die Bedarfsliste wurde **zufällig gemischt**, und daraus diese **Warteliste** erstellt.
+Wenn du dich zur Bedarfsbestimmung nicht gemeldet hast, kannst du dich noch immer **ans Ende** der Liste setzen lassen.
 
 Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle einen Voucher weitergibt
 {% for item in queue %}
   - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
 {%- endfor %}
-  - *Füge dich hier ein, indem du mir eine PN mit **VOUCHER-BEDARF: 1** schickst.*
+  - *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
 {% endif %}
