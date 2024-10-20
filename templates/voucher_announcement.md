@@ -21,6 +21,12 @@ Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch 
   Wenn du also z.B. für dich und einen Freund je ein Ticket benötigst, schreibe "*VOUCHER-BEDARF: 2*"
 - Ich setze dich auf die Interessentenliste und informiere dich, sobald ein Voucher für dich verfügbar ist
 
+### Für Organisatoren: Bedarfsermittlung
+
+- Wenn der Bedarf von flipdot feststeht, übermittle die Anzahl an die CCC Organisatoren
+  - Bitte finde selber raus, wie das dieses Jahr funktioniert. Wahrscheinlich hat flipdot eine Mail mit Informationen bekommen
+- Sobald du es erfolgreich getan hast, schicke mir eine PN mit dem Text **VOUCHER-GESAMT-BEDARF: X**, wobei das X für die *Gesamtzahl* Personen steht, die du gemeldet hast
+
 Das ist die Liste der **insgesamt {{ total_persons_in_queue }}** Interessenten:
 
 {% else %}
