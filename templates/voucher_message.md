@@ -15,4 +15,4 @@ Andernfalls warten andere vergeblich auf ihre Chance, sich ein Ticket kaufen zu 
 {% if voucher.old_owner %}
 Falls es Probleme mit dem Voucher gibt, wende dich bitte an @{{ voucher.old_owner }}. Von dieser Person stammt der Voucher.
 {% endif %}
-Danke und viel Spaß beim nächsten Congress!
+Danke und viel Spaß beim Congress!
