@@ -210,7 +210,7 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
     logging.info(f"Sending voucher to {username}")
     res = client.create_post(
         message_content,
-        title="Dein Congress Voucher",
+        title=f"Dein {get_congress_id()} Voucher",
         archetype="private_message",
         target_recipients=username,
     )
