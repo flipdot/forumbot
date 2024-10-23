@@ -30,9 +30,9 @@ def handle_private_message_bedarf(
     client: DiscourseStorageClient, topic, posts, posts_content
 ):
     persons = re.search(r"\d+", posts_content)
-    if not persons:
+    if persons is None:
         persons = re.search(r"\d+", topic["title"])
-    if not persons:
+    if persons is None:
         persons = 1
     else:
         persons = int(persons[0])
@@ -40,6 +40,28 @@ def handle_private_message_bedarf(
     data = client.storage.get("voucher")
     queue = data.get("queue", [])
     name = posts["post_stream"]["posts"][0]["username"]
+
+    if persons == 0:
+        for entry in queue:
+            if entry["name"] == name:
+                queue.remove(entry)
+                client.storage.put("voucher", data)
+                client.create_post(
+                    "0 Voucher also? Okay, ich habe dich aus der Warteschlange entfernt.",
+                    topic_id=topic["id"],
+                )
+                break
+        else:
+            client.create_post(
+                'Ich habe "0 Voucher" verstanden und wollte dich aus der Warteschlange entfernen, '
+                "aber ich konnte dich nicht finden. Vielleicht hast du dich vertippt?\n"
+                "\n"
+                "Falls du bereits einen Voucher erhalten hast und ihn zurückgeben möchtest, "
+                "öffne den Thread **in dem ich dir den Voucher bereits zugesendet habe**, "
+                "und schreibe mir einfach den Voucher-Code zurück.",
+                topic_id=topic["id"],
+            )
+        return
 
     # Search for the user in the queue, update the number of persons
     for entry in queue:
