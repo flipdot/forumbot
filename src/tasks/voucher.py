@@ -78,7 +78,8 @@ def handle_private_message_bedarf(
     client.storage.put("voucher", data)
     # send a confirmation to the user
     client.create_post(
-        f"Alles klar! Ich habe dich für {persons} Voucher vorgemerkt.",
+        f"Alles klar! Ich habe dich für {persons} Voucher vorgemerkt. Falls du es dir anders überlegst, "
+        'schreibe mir "VOUCHER-BEDARF 0" und ich entferne dich aus der Warteschlange.',
         topic_id=topic["id"],
     )
 
