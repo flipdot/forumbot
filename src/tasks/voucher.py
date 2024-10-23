@@ -4,7 +4,6 @@ from datetime import datetime
 from venv import logger
 import random
 
-import babel.dates
 from pydiscourse import DiscourseClient
 
 import constants
@@ -309,14 +308,14 @@ def render_post_content(data: dict) -> str:
     queue = data.get("queue", [])
     total_persons_reported = data.get("total_persons_reported")
 
-    now = datetime.now()
+    # now = datetime.now()
     for v in vouchers:
         if not v["received_at"]:
             continue
-        delta = v["received_at"] - now
-        v["received_delta"] = babel.dates.format_timedelta(
-            delta, locale="de_DE", add_direction=True
-        )
+        # delta = v["received_at"] - now
+        # v["received_delta"] = babel.dates.format_timedelta(
+        #     delta, locale="de_DE", add_direction=True
+        # )
 
     return render(
         "voucher_announcement.md",
