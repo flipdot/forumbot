@@ -38,7 +38,7 @@ def handle_private_message_bedarf(
 
     data = client.storage.get("voucher")
     queue = data.get("queue", [])
-    name = posts["post_stream"]["posts"][0]["username"]
+    name = posts["post_stream"]["posts"][-1]["username"]
 
     if persons == 0:
         for entry in queue:
