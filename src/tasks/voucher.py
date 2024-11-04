@@ -169,6 +169,7 @@ def handle_private_message_voucher_list(
             "message_id": None,
             "persons": None,
             "received_at": datetime.now(),
+            "history": [],
         }
         for v in received_voucher
     ]
@@ -239,7 +240,15 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
     message_id = res.get("topic_id")
     logging.info(f"Sent, message_id is {message_id}")
     voucher["message_id"] = message_id
-    voucher["received_at"] = datetime.now()
+    now = datetime.now()
+    voucher["received_at"] = now
+    voucher["history"].append(
+        {
+            "username": voucher["owner"],
+            "received_at": now.isoformat(),
+            "persons": voucher["persons"],
+        }
+    )
 
 
 def send_message_to_user(
