@@ -1,6 +1,7 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, date
+from pathlib import Path
 from venv import logger
 import random
 
@@ -8,6 +9,7 @@ from pydiscourse import DiscourseClient
 
 import constants
 from client import DiscourseStorageClient
+from gantt import plot_gantt_chart
 
 # custom types
 # TypedDict is only available since python 3.8
@@ -326,6 +328,8 @@ def render_post_content(data: dict) -> str:
         #     delta, locale="de_DE", add_direction=True
         # )
 
+    image_url = data.get("voucher_history_image", {}).get("short_url")
+
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
@@ -333,6 +337,7 @@ def render_post_content(data: dict) -> str:
         total_persons_in_queue=sum([entry["persons"] for entry in queue]),
         total_persons_reported=total_persons_reported,
         bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
+        image_url=image_url,
     )
 
 
@@ -381,6 +386,28 @@ def get_congress_id(now: datetime | None = None) -> str:
         now = datetime.now()
     congress_number = now.year - 1986
     return f"{congress_number}C3"
+
+
+def update_history_image(client: DiscourseStorageClient) -> None:
+    data = client.storage.get("voucher", {})
+
+    if not data.get("voucher"):
+        return
+
+    fig = plot_gantt_chart(
+        data["voucher"],
+        start_date=date(2024, 10, 22),
+        end_date=date(2024, 11, 11),
+    )
+    path = Path("gantt.png")
+
+    fig.savefig(path)
+    res = client.upload_image(path, "png", synchronous=True)
+
+    if "short_url" in res:
+        data["voucher_history_image"] = res
+
+    client.storage.put("voucher", data)
 
 
 def main(client: DiscourseStorageClient) -> None:

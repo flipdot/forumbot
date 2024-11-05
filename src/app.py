@@ -94,11 +94,15 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
 
     schedule.every(30).seconds.do(fetch_unread_messages, client)
     schedule.every().minute.do(tasks.voucher.main, client)
+    schedule.every(12).hours.do(tasks.voucher.update_history_image, client)
 
     # schedule.every(15).seconds.do(fetch_unread_messages, client)
     # schedule.every(15).seconds.do(tasks.voucher.main, client)
+    # schedule.every(15).seconds.do(tasks.voucher.update_history_image, client)
 
     fetch_unread_messages(client)
+    tasks.voucher.main(client)
+    tasks.voucher.update_history_image(client)
 
 
 def main():

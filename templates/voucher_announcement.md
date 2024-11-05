@@ -65,6 +65,10 @@ Wir haben {{ vouchers | length }} Voucher zur Verfügung! Hier sind sie:
 
 Du bist oben in der Liste? Dann hast du eine PN von mir bekommen! **Bitte kaufe schnellstmöglich deine Tickets!** https://tickets.events.ccc.de/
 
+{% if image_url %}
+![gantt]({{ image_url }})
+{% endif %}
+
 ## Warteliste
 
 Die Bedarfsliste wurde **zufällig gemischt**, und daraus diese **Warteliste** erstellt.
