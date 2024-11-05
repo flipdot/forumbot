@@ -57,7 +57,6 @@ def plot_gantt_chart(voucher, start_date: date, end_date: date):
         user: plt.cm.tab20(i) for i, user in enumerate(df["username"].unique())
     }
 
-    # Plotting
     fig, ax = plt.subplots(figsize=(12, 6))
 
     # Loop over each voucher and each record within each voucher
@@ -87,14 +86,11 @@ def plot_gantt_chart(voucher, start_date: date, end_date: date):
                 weight="bold",
             )
 
-    # Customize axes and labels
     ax.set_title("Voucherstats")
     ax.set_yticks(range(len(voucher_ids)))
     ax.set_yticklabels(voucher_ids)
-    # Generate dates and convert them to ordinals
     date_range = pd.date_range(start_date, end_date)
 
-    # Customize axes and labels
     ax.set_xticks(date_range)
     ax.set_xticklabels(date_range.strftime("%Y-%m-%d"), rotation=90)
 
