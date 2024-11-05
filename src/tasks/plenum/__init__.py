@@ -13,8 +13,8 @@ PLENUM_CATEGORY_NAME = "test" if DEBUG else "orga/plena"
 
 def get_next_plenum_date(now: datetime) -> Tuple[datetime, timedelta]:
     next_days = (now + timedelta(days=i) for i in count())
-    first_tuesdays = (x for x in next_days if x.weekday() == 1 and x.day <= 7)
-    plenum_date = next(first_tuesdays)
+    first_sundays = (x for x in next_days if x.weekday() == 3 and x.day <= 7)
+    plenum_date = next(first_sundays)
     delta = plenum_date - now
     return plenum_date, delta
 
