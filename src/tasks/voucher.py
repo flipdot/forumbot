@@ -394,10 +394,22 @@ def update_history_image(client: DiscourseStorageClient) -> None:
     if not data.get("voucher"):
         return
 
+    # TODO: make this configurable via chat command
+    start_date = date(2024, 10, 22)
+    end_date = date(2024, 11, 11)
+
+    now = datetime.now()
+
+    if start_date > now.date():
+        return
+
+    if end_date < now.date():
+        return
+
     fig = plot_gantt_chart(
         data["voucher"],
-        start_date=date(2024, 10, 22),
-        end_date=date(2024, 11, 11),
+        start_date=start_date,
+        end_date=end_date,
     )
     path = Path("gantt.png")
 
