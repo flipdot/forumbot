@@ -92,17 +92,17 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every().day.at("12:37").do(tasks.plenum.remind.main, client)
     schedule.every().day.at("20:00").do(tasks.plenum.post_protocol.main, client)
 
-    schedule.every(30).seconds.do(fetch_unread_messages, client)
-    schedule.every().minute.do(tasks.voucher.main, client)
     schedule.every(12).hours.do(tasks.voucher.update_history_image, client)
+    schedule.every().minute.do(tasks.voucher.main, client)
+    schedule.every().minute.do(fetch_unread_messages, client)
 
     # schedule.every(15).seconds.do(fetch_unread_messages, client)
     # schedule.every(15).seconds.do(tasks.voucher.main, client)
     # schedule.every(15).seconds.do(tasks.voucher.update_history_image, client)
 
-    fetch_unread_messages(client)
-    tasks.voucher.main(client)
     tasks.voucher.update_history_image(client)
+    tasks.voucher.main(client)
+    fetch_unread_messages(client)
 
 
 def main():
