@@ -2,7 +2,6 @@ import logging
 import re
 from datetime import datetime, date
 from pathlib import Path
-from venv import logger
 import random
 
 from pydiscourse import DiscourseClient
@@ -22,6 +21,7 @@ from typing import Dict, List, Optional
 
 from utils import render
 
+logger = logging.getLogger(__name__)
 VoucherConfigElement = Dict
 
 VoucherConfig = List[VoucherConfigElement]
@@ -418,6 +418,8 @@ def update_history_image(client: DiscourseStorageClient) -> None:
 
     if "short_url" in res:
         data["voucher_history_image"] = res
+    else:
+        logger.error(f"Unexpected response from Discourse: {res}")
 
     client.storage.put("voucher", data)
 
