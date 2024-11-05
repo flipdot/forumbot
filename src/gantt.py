@@ -40,7 +40,7 @@ def plot_gantt_chart(voucher, start_date: date, end_date: date):
             {
                 "voucher_id": f"#{i + 1}",
                 "username": "",
-                "text": f"noch {days_left} Tage",
+                "text": f"noch max {days_left} Tage",
                 "start": last_end,
                 "end": end_date,
             }
