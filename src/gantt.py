@@ -50,7 +50,7 @@ def plot_gantt_chart(voucher, start_date: date, end_date: date):
     df = pd.DataFrame(data)
     df["start"] = pd.to_datetime(df["start"])
     df["end"] = pd.to_datetime(df["end"])
-    df["duration"] = df["end"] - df["start"]  # .dt.total_seconds()  # / (24 * 60 * 60)
+    df["duration"] = df["end"] - df["start"]
 
     # Unique colors for each user
     user_colors = {
@@ -92,7 +92,7 @@ def plot_gantt_chart(voucher, start_date: date, end_date: date):
     ax.set_yticks(range(len(voucher_ids)))
     ax.set_yticklabels(voucher_ids)
     # Generate dates and convert them to ordinals
-    date_range = pd.date_range(df["start"].min(), df["end"].max())
+    date_range = pd.date_range(start_date, end_date)
 
     # Customize axes and labels
     ax.set_xticks(date_range)
