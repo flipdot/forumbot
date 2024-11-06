@@ -107,7 +107,6 @@ def plot_gantt_chart(
             )
 
     if exhausted_at:
-        exhausted_at = pd.to_datetime(exhausted_at)
         ax.axvline(exhausted_at, color="red", linestyle="--", label="Exhausted at")
         ax.text(
             exhausted_at,

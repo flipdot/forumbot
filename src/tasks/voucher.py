@@ -328,7 +328,11 @@ def render_post_content(data: dict) -> str:
         #     delta, locale="de_DE", add_direction=True
         # )
 
-    image_url = data.get("voucher_history_image", {}).get("short_url")
+    image_url = (
+        data.get("voucher_history_image", {})
+        .get(get_congress_id(), {})
+        .get("short_url")
+    )
 
     return render(
         "voucher_announcement.md",
@@ -419,8 +423,11 @@ def update_history_image(client: DiscourseStorageClient) -> None:
     fig.savefig(path)
     res = client.upload_image(path, "png", synchronous=True)
 
+    if "voucher_history_image" not in data:
+        data["voucher_history_image"] = {}
+
     if "short_url" in res:
-        data["voucher_history_image"] = res
+        data["voucher_history_image"][get_congress_id()] = res
     else:
         logger.error(f"Unexpected response from Discourse: {res}")
 
