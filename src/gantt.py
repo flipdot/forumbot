@@ -9,11 +9,11 @@ def plot_gantt_chart(
     voucher, start_date: date, end_date: date, exhausted_at: datetime | None = None
 ):
     start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    end_date = pd.to_datetime(end_date) + pd.Timedelta(days=1)
     data = []
+    last_end = start_date
     for i, voucher in enumerate(voucher):
         history = voucher["history"]
-        last_end = start_date
         for j, entry in enumerate(
             sorted(history, key=lambda x: datetime.fromisoformat(x["received_at"]))
         ):
@@ -21,7 +21,7 @@ def plot_gantt_chart(
             if j + 1 < len(history):
                 end = pd.to_datetime(history[j + 1]["received_at"])
             else:
-                end = pd.to_datetime("now")
+                end = min(pd.to_datetime("now"), end_date)
 
             if entry["persons"] > 1:
                 extra_persons = f" + {entry['persons'] - 1}"
@@ -37,16 +37,24 @@ def plot_gantt_chart(
                 }
             )
             last_end = end
-        days_left = (end_date - last_end).days
-        data.append(
-            {
-                "voucher_id": f"#{i + 1}",
-                "username": "",
-                "text": f"noch max {days_left} Tage",
-                "start": last_end,
-                "end": end_date,
-            }
-        )
+        if end_date > datetime.now():
+            days_left = (end_date - last_end).days
+
+            if days_left <= 0:
+                text = ""
+            elif days_left == 1:
+                text = "noch max\n1 Tag"
+            else:
+                text = f"noch max\n{days_left} Tage"
+            data.append(
+                {
+                    "voucher_id": f"#{i + 1}",
+                    "username": "",
+                    "text": text,
+                    "start": last_end,
+                    "end": end_date,
+                }
+            )
 
     # Convert data to DataFrame and process dates
     df = pd.DataFrame(data)
@@ -55,9 +63,10 @@ def plot_gantt_chart(
     df["duration"] = df["end"] - df["start"]
 
     # Unique colors for each user
-    user_colors = {
-        user: plt.cm.tab20(i) for i, user in enumerate(df["username"].unique())
-    }
+    # Drop the "empty string" username so it doesn't affect the color mapping
+    usernames = df["username"].unique()
+    usernames = usernames[usernames != ""]
+    user_colors = {user: plt.cm.tab20(i) for i, user in enumerate(usernames)}
 
     fig, ax = plt.subplots(figsize=(12, 6))
 
@@ -68,14 +77,23 @@ def plot_gantt_chart(
         for _, row in voucher_data.iterrows():
             start = row["start"]
             duration = row["duration"]
-            color = user_colors[row["username"]]
+            if row["username"] == "":
+                kwargs = {
+                    "color": "white",
+                    "edgecolor": "#aaaaaa",
+                    "hatch": "////",
+                }
+            else:
+                kwargs = {
+                    "color": user_colors[row["username"]],
+                    "edgecolor": "black",
+                }
 
             ax.barh(
                 voucher_id,
                 duration,
                 left=start.to_pydatetime(),
-                color=color,
-                edgecolor="black",
+                **kwargs,
             )
             ax.text(
                 start.to_pydatetime() + duration / 2,
