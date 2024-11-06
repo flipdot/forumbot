@@ -8,31 +8,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Setup python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
-        architecture: x64
-    - name: Install poetry
-      run: sudo pip install poetry
-    - name: Install dependencies
-      run: poetry install
-    - name: Run tests
-      run: poetry run pytest tests
-      env:
-        PYTHONPATH: src
-        DISCOURSE_API_KEY: _
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          architecture: x64
+      - name: Install poetry
+        run: sudo pip install poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Run tests
+        run: poetry run pytest tests
+        env:
+          PYTHONPATH: src
+          DISCOURSE_API_KEY: _
 
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
           python-version: '3.13'
-    - uses: pre-commit/action@v3.0.1
+      - uses: pre-commit/action@v3.0.1
 
   build:
     needs: tests
@@ -53,3 +53,20 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: flipdot/forumbot:latest
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /root/forumbot
+            docker system prune -f
+            docker compose pull
+            docker compose up -d
