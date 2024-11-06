@@ -100,6 +100,8 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     # schedule.every(15).seconds.do(tasks.voucher.main, client)
     # schedule.every(15).seconds.do(tasks.voucher.update_history_image, client)
 
+    tasks.plenum.announce.main(client)
+    tasks.plenum.remind.main(client)
     tasks.voucher.update_history_image(client)
     tasks.voucher.main(client)
     fetch_unread_messages(client)
