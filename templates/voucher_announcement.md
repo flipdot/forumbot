@@ -8,6 +8,12 @@ Ein Voucher ermöglicht euch, ein Ticket zu erwerben. In den letzten Jahren wurd
 
 Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch Interesse an einem Voucher hat!
 
+{% if voucher_phase_start and voucher_phase_end %}
+**Voucherphase**: {{ voucher_phase_start }} bis {{ voucher_phase_end }}
+{% else %}
+**Voucherphase**: Unbekannt. Schreibe mir eine PN mit dem Text **VOUCHER-PHASE: YYYY-MM-DD bis YYYY-MM-DD**
+{% endif %}
+
 # Status
 
 {% if not vouchers %}
@@ -67,6 +73,15 @@ Du bist oben in der Liste? Dann hast du eine PN von mir bekommen! **Bitte kaufe 
 
 {% if image_url %}
 ![gantt]({{ image_url }})
+{% if not voucher_exhausted_at %}
+Das Kontingent ist aufgebraucht? Schreibe mir eine PN mit dem Text `VOUCHER-EXHAUSTED-AT YYYY-MM-DD HH:MM`.
+{% endif %}
+{% elif not voucher_phase_start or not voucher_phase_end %}
+**Hinweis:** Bitte schreibe mir eine PN mit dem Text
+```
+VOUCHER-PHASE: YYYY-MM-DD bis YYYY-MM-DD
+```
+Dann poste ich hier eine hübsche Grafik.
 {% endif %}
 
 ## Warteliste

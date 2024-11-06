@@ -107,16 +107,19 @@ def plot_gantt_chart(
             )
 
     if exhausted_at:
-        ax.axvline(exhausted_at, color="red", linestyle="--", label="Exhausted at")
+        ax.axvline(
+            exhausted_at, color="red", linestyle="--", label="Kontingent erschöpft"
+        )
         ax.text(
             exhausted_at,
-            len(voucher_ids),
+            len(voucher_ids) - 0.5,
             "Kontingent erschöpft",
-            va="center",
+            va="bottom",
             ha="center",
             color="red",
             fontsize=12,
             weight="bold",
+            backgroundcolor="white",
         )
 
     ax.set_title("Voucherstats")

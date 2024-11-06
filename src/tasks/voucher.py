@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime, date
+from datetime import datetime
 from pathlib import Path
 import random
 
@@ -9,6 +9,7 @@ from pydiscourse import DiscourseClient
 import constants
 from client import DiscourseStorageClient
 from gantt import plot_gantt_chart
+from babel.dates import format_date
 
 # custom types
 # TypedDict is only available since python 3.8
@@ -194,6 +195,103 @@ def handle_private_message_voucher_list(
     )
 
 
+def handle_private_message_voucher_phase_range(
+    client: DiscourseStorageClient, topic, posts, posts_content
+):
+    phase_range = re.search(
+        r"(\d{4}-\d{2}-\d{2}) bis (\d{4}-\d{2}-\d{2})", posts_content
+    )
+    if not phase_range:
+        client.create_post(
+            "Ich konnte keinen Zeitraum in deiner Nachricht finden. "
+            "Nutze das Format `YYYY-MM-DD bis YYYY-MM-DD`.",
+            topic_id=topic["id"],
+        )
+        return
+
+    data = client.storage.get("voucher")
+
+    if "voucher_phase_range" not in data:
+        data["voucher_phase_range"] = {}
+
+    parsed_ranges = {
+        "start": datetime.fromisoformat(phase_range[1]),
+        "end": datetime.fromisoformat(phase_range[2]),
+    }
+
+    formatted_ranges = {
+        "start": format_date(parsed_ranges["start"], format="long", locale="de_DE"),
+        "end": format_date(parsed_ranges["end"], format="long", locale="de_DE"),
+    }
+
+    data["voucher_phase_range"][get_congress_id()] = {
+        "start": phase_range[1],
+        "end": phase_range[2],
+    }
+
+    client.storage.put("voucher", data)
+    client.create_post(
+        f"Danke für die Information! Ich schreibe in meinen Post, dass die Voucher "
+        f"vom {formatted_ranges['start']} bis {formatted_ranges['end']} genutzt werden können.",
+        topic_id=topic["id"],
+    )
+    update_history_image(client)
+
+
+def handle_private_message_voucher_exhausted_at(
+    client: DiscourseStorageClient, topic, posts, posts_content
+):
+    exhausted_at = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2})", posts_content)
+    if not exhausted_at:
+        client.create_post(
+            "Ich konnte keinen Zeitpunkt in deiner Nachricht finden. "
+            "Nutze das Format `YYYY-MM-DD HH:MM`.",
+            topic_id=topic["id"],
+        )
+        return
+
+    data = client.storage.get("voucher")
+
+    if (
+        "voucher_phase_range" not in data
+        or get_congress_id() not in data["voucher_phase_range"]
+    ):
+        client.create_post(
+            "Ich konnte keinen Zeitraum für die Voucher finden. "
+            "Bitte gib zuerst den Zeitraum mittels `VOUCHER-PHASE YYYY-MM-DD bis YYYY-MM-DD` an, bevor du mir "
+            "mitteilst, dass die Voucher erschöpft sind.",
+            topic_id=topic["id"],
+        )
+        return
+
+    start_date = datetime.fromisoformat(
+        data["voucher_phase_range"][get_congress_id()]["start"]
+    )
+    end_date = datetime.fromisoformat(
+        data["voucher_phase_range"][get_congress_id()]["end"]
+    )
+
+    parsed_exhausted_at = datetime.fromisoformat(exhausted_at[1])
+
+    if parsed_exhausted_at < start_date or parsed_exhausted_at > end_date:
+        client.create_post(
+            "Der Zeitpunkt, an dem die Voucher erschöpft sein sollen, liegt nicht innerhalb des "
+            "Zeitraums, in dem die Voucher genutzt werden können. Bitte gib einen Zeitpunkt "
+            "zwischen dem Start- und Enddatum der Voucherphase an.",
+            topic_id=topic["id"],
+        )
+        return
+
+    data["voucher_phase_range"][get_congress_id()]["exhausted_at"] = exhausted_at[1]
+
+    client.storage.put("voucher", data)
+    client.create_post(
+        "Danke für die Information! Ich aktualisiere die Grafik in meinem Post.",
+        topic_id=topic["id"],
+    )
+    update_history_image(client)
+
+
 def private_message_handler(client: DiscourseStorageClient, topic, posts) -> bool:
     posts_content = posts["post_stream"]["posts"][-1]["cooked"]
 
@@ -224,6 +322,23 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> boo
 
     if any(s in topic["title"].lower() for s in voucher_list_strings):
         handle_private_message_voucher_list(client, topic, posts, posts_content)
+        return True
+
+    voucher_phase_range_strings = [
+        "voucher-phase",
+        "voucherphase",
+    ]
+
+    if any(s in posts_content.lower() for s in voucher_phase_range_strings):
+        handle_private_message_voucher_phase_range(client, topic, posts, posts_content)
+        return True
+
+    voucher_exhausted_at_strings = [
+        "voucher-exhausted-at",
+    ]
+
+    if any(s in posts_content.lower() for s in voucher_exhausted_at_strings):
+        handle_private_message_voucher_exhausted_at(client, topic, posts, posts_content)
         return True
 
 
@@ -334,6 +449,19 @@ def render_post_content(data: dict) -> str:
         .get("short_url")
     )
 
+    voucher_phase_range = data.get("voucher_phase_range", {}).get(get_congress_id(), {})
+    if ts := voucher_phase_range.get("start"):
+        voucher_phase_start = format_date(
+            datetime.fromisoformat(ts), format="long", locale="de_DE"
+        )
+    else:
+        voucher_phase_start = None
+    if ts := voucher_phase_range.get("end"):
+        voucher_phase_end = format_date(
+            datetime.fromisoformat(ts), format="long", locale="de_DE"
+        )
+    else:
+        voucher_phase_end = None
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
@@ -342,6 +470,9 @@ def render_post_content(data: dict) -> str:
         total_persons_reported=total_persons_reported,
         bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
         image_url=image_url,
+        voucher_phase_start=voucher_phase_start,
+        voucher_phase_end=voucher_phase_end,
+        voucher_exhausted_at=voucher_phase_range.get("exhausted_at"),
     )
 
 
@@ -398,13 +529,18 @@ def update_history_image(client: DiscourseStorageClient) -> None:
     if not data.get("voucher"):
         return
 
-    # TODO: make this configurable via chat command
-    start_date = date(2024, 10, 22)
-    end_date = date(2024, 11, 11)
-    # estimate from https://forum.flipdot.org/t/voucher-38c3/6298/20
-    exhausted_at = datetime(2024, 11, 5, 12, 26)
-
     now = datetime.now()
+
+    phase_range = data.get("voucher_phase_range", {}).get(get_congress_id(), {})
+    if ts := phase_range.get("start"):
+        start_date = datetime.fromisoformat(ts).date()
+    else:
+        return
+
+    if ts := phase_range.get("end"):
+        end_date = datetime.fromisoformat(ts).date()
+    else:
+        return
 
     if start_date > now.date():
         return
@@ -412,6 +548,10 @@ def update_history_image(client: DiscourseStorageClient) -> None:
     if end_date < now.date():
         return
 
+    if ts := phase_range.get("exhausted_at"):
+        exhausted_at = datetime.fromisoformat(ts)
+    else:
+        exhausted_at = None
     fig = plot_gantt_chart(
         data["voucher"],
         start_date=start_date,
