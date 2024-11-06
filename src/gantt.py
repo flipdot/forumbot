@@ -5,7 +5,9 @@ import pandas as pd
 import yaml
 
 
-def plot_gantt_chart(voucher, start_date: date, end_date: date):
+def plot_gantt_chart(
+    voucher, start_date: date, end_date: date, exhausted_at: datetime | None = None
+):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     data = []
@@ -86,6 +88,20 @@ def plot_gantt_chart(voucher, start_date: date, end_date: date):
                 weight="bold",
             )
 
+    if exhausted_at:
+        exhausted_at = pd.to_datetime(exhausted_at)
+        ax.axvline(exhausted_at, color="red", linestyle="--", label="Exhausted at")
+        ax.text(
+            exhausted_at,
+            len(voucher_ids),
+            "Kontingent erschöpft",
+            va="center",
+            ha="center",
+            color="red",
+            fontsize=12,
+            weight="bold",
+        )
+
     ax.set_title("Voucherstats")
     ax.set_yticks(range(len(voucher_ids)))
     ax.set_yticklabels(voucher_ids)
@@ -106,5 +122,6 @@ if __name__ == "__main__":
         store["voucher"],
         start_date=date(2024, 10, 22),
         end_date=date(2024, 11, 11),
+        exhausted_at=datetime(2024, 11, 5, 12, 26),
     )
     fig.show()

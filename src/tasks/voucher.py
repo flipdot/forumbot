@@ -397,6 +397,8 @@ def update_history_image(client: DiscourseStorageClient) -> None:
     # TODO: make this configurable via chat command
     start_date = date(2024, 10, 22)
     end_date = date(2024, 11, 11)
+    # estimate from https://forum.flipdot.org/t/voucher-38c3/6298/20
+    exhausted_at = datetime(2024, 11, 5, 12, 26)
 
     now = datetime.now()
 
@@ -410,6 +412,7 @@ def update_history_image(client: DiscourseStorageClient) -> None:
         data["voucher"],
         start_date=start_date,
         end_date=end_date,
+        exhausted_at=exhausted_at,
     )
     path = Path("gantt.png")
 
