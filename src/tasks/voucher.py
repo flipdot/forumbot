@@ -341,6 +341,13 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> boo
         handle_private_message_voucher_exhausted_at(client, topic, posts, posts_content)
         return True
 
+    if re.search(r"CHAOS[a-zA-Z0-9]+", posts_content):
+        # will be handled by the voucher distribution function,
+        # as it knows which thread ID is related to which voucher.
+        # Just return True to not return a "I didn't understand your message" error message
+        # to the user
+        return True
+
 
 def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
     if voucher["message_id"]:
@@ -524,12 +531,15 @@ def get_congress_id(now: datetime | None = None) -> str:
 
 
 def update_history_image(client: DiscourseStorageClient) -> None:
+    now = datetime.now()
+    if now.month not in [10, 11, 12]:
+        logging.info("Not voucher season. Skipping.")
+        return
+
     data = client.storage.get("voucher", {})
 
     if not data.get("voucher"):
         return
-
-    now = datetime.now()
 
     phase_range = data.get("voucher_phase_range", {}).get(get_congress_id(), {})
     if ts := phase_range.get("start"):
@@ -578,7 +588,7 @@ def main(client: DiscourseStorageClient) -> None:
     # voucher only relevant in october, november and maybe december
     now = datetime.now()
     if now.month not in [10, 11, 12]:
-        logging.info("Not voucher season")
+        logging.info("Not voucher season. Skipping.")
         return
 
     process_voucher_distribution(client)
