@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import random
 
@@ -552,10 +552,10 @@ def update_history_image(client: DiscourseStorageClient) -> None:
     else:
         return
 
-    if start_date > now.date():
+    if start_date > (now.date() - timedelta(days=1)):
         return
 
-    if end_date < now.date():
+    if end_date < (now.date() + timedelta(days=1)):
         return
 
     if ts := phase_range.get("exhausted_at"):
