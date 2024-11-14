@@ -552,10 +552,10 @@ def update_history_image(client: DiscourseStorageClient) -> None:
     else:
         return
 
-    if start_date > (now.date() - timedelta(days=1)):
+    if start_date > (now.date() + timedelta(days=1)):
         return
 
-    if end_date < (now.date() + timedelta(days=1)):
+    if end_date < (now.date() - timedelta(days=3)):
         return
 
     if ts := phase_range.get("exhausted_at"):
