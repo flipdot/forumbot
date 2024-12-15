@@ -54,19 +54,21 @@ jobs:
           push: true
           tags: flipdot/forumbot:latest
 
-  deploy:
-    needs: build
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd /root/forumbot
-            docker system prune -f
-            docker compose pull
-            docker compose up -d
+# TODO: We've disabled the old server and need to discuss how we want
+#            to deploy the bot in the future. It is now running on "spouting-whale"
+#  deploy:
+#    needs: build
+#    if: github.ref == 'refs/heads/master'
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Deploy to server
+#        uses: appleboy/ssh-action@master
+#        with:
+#          host: ${{ secrets.SSH_HOST }}
+#          username: ${{ secrets.SSH_USER }}
+#          key: ${{ secrets.SSH_KEY }}
+#          script: |
+#            cd /root/forumbot
+#            docker system prune -f
+#            docker compose pull
+#            docker compose up -d
