@@ -12,6 +12,7 @@ RUN pip install uv
 
 COPY pyproject.toml /app/
 COPY uv.lock /app/
+COPY README.md /app/
 
 WORKDIR  /app
 
