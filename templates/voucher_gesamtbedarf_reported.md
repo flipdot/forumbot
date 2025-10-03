@@ -10,15 +10,15 @@ Ich habe die **Bedarfsliste** zufällig gemischt und daraus eine **Warteliste** 
 - Du musst **schnellstmöglich** dein Ticket **kaufen und bezahlen**
 - Nach dem Kauf bekommst du einen neuen Voucher. Diesen musst du als **Antwort auf meine Nachricht** an mich **zurückschicken!**
 
-### Du stehst nicht auf der Warteliste?
-
+[details="Ich stehe nicht auf der Warteliste"]
 Schicke @{{ bot_name }} eine Nachricht mit **VOUCHER-BEDARF: 1**.
 Du wirst dann an das **Ende der Warteliste** gesetzt.
+[/details]
 
-## Für flipdot Organisatoren:
-
-- Wir warten darauf, Voucher von den CCC Organisatoren zu erhalten.
-  - Das übernimmt ein Mensch
-- Dieser Mensch schickt mir eine Voucher-Liste
+[details="@{{ reported_by }} organisiert die Voucher"]
+- @{{ reported_by }} hat den Bedarf an die CCC Organisatoren übermittelt.
+- @{{ reported_by }} wartet darauf, eine Liste ein Voucher zu erhalten
+- @{{ reported_by }} wird mir diese Liste schicken
   - Schicke mir eine Nachricht mit dem Titel **VOUCHER-LISTE** und der Liste der Voucher
-- Sobald ich die Voucher haben, werde ich die ersten Personen auf der Warteliste informieren.
+- Sobald ich, @{{ bot_name }}, die Voucher erhalten hat, werde ich die ersten Personen auf der Warteliste informieren.
+[/details]
