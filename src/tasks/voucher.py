@@ -5,6 +5,7 @@ from pathlib import Path
 import random
 
 from pydiscourse import DiscourseClient
+from pydiscourse.exceptions import DiscourseClientError
 
 import constants
 from client import DiscourseStorageClient
@@ -304,10 +305,10 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> boo
         return True
 
     gesamtbedarf_strings = [
-        "voucher-gesamt-bedarf",
-        "voucher-gesamtbedarf",
-        "voucher gesamt bedarf",
-        "voucher gesamtbedarf",
+        "voucher-gesamt-bedarf-gemeldet",
+        "voucher-gesamtbedarf-gemeldet",
+        "voucher gesamt bedarf gemeldet",
+        "voucher gesamtbedarf gemeldet",
     ]
 
     if any(s in posts_content.lower() for s in gesamtbedarf_strings):
@@ -421,6 +422,7 @@ def create_voucher_topic(
 
     data["voucher"] = []
     data["queue"] = []
+    data["total_persons_reported"] = None
     if "voucher_topics" not in data:
         data["voucher_topics"] = {}
 
@@ -501,7 +503,6 @@ def process_voucher_distribution(client: DiscourseStorageClient):
                 voucher["old_owner"] = voucher["owner"]
                 voucher["owner"] = None
                 voucher["message_id"] = None
-                voucher["persons"] = None
                 voucher["received_at"] = datetime.now()
                 voucher["persons"] = None
 
@@ -513,10 +514,23 @@ def process_voucher_distribution(client: DiscourseStorageClient):
             next_item = queue.pop(0)
             voucher["owner"] = next_item["name"]
             voucher["persons"] = next_item["persons"]
+            voucher["retry_counter"] = 0
 
         if not voucher.get("message_id") and voucher["owner"]:
             # Voucher was assigned to someone but they haven't received it yet
-            send_voucher_to_user(client, voucher)
+            try:
+                send_voucher_to_user(client, voucher)
+            except DiscourseClientError:
+                logging.exception(
+                    f"Failed to send voucher {voucher['voucher']} to {voucher['owner']}"
+                )
+                voucher["retry_counter"] = voucher.get("retry_counter", 0) + 1
+                if voucher["retry_counter"] >= 10:
+                    logging.error(
+                        f"Giving up sending voucher {voucher['voucher']} to {voucher['owner']} after 10 attempts"
+                    )
+                    voucher["owner"] = None
+                    voucher["retry_counter"] = 0
 
     client.storage.put("voucher", data)
 

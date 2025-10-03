@@ -29,9 +29,11 @@ Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch 
 
 ### Für Organisatoren: Bedarfsermittlung
 
+[details="Ich bin Organisator"]
 - Wenn der Bedarf von flipdot feststeht, übermittle die Anzahl an die CCC Organisatoren
   - Bitte finde selber raus, wie das dieses Jahr funktioniert. Wahrscheinlich hat flipdot eine Mail mit Informationen bekommen
-- Sobald du es erfolgreich getan hast, schicke mir eine PN mit dem Text **VOUCHER-GESAMT-BEDARF: X**, wobei das X für die *Gesamtzahl* Personen steht, die du gemeldet hast
+- Sobald du es erfolgreich getan hast, schicke mir eine PN mit dem Text **VOUCHER-GESAMT-BEDARF-GEMELDET: X**, wobei das X für die *Gesamtzahl* Personen steht, die du gemeldet hast
+[/details]
 
 Das ist die Liste der **insgesamt {{ total_persons_in_queue }}** Interessenten:
 
@@ -56,9 +58,11 @@ Wenn du dich zur Bedarfsbestimmung nicht gemeldet hast, kannst du dich noch imme
 
 ## Du hast eine Liste mit allen Vouchern?
 
+[details="Ich bin Organisator"]
 Ich übernehme die Verteilung! **Schick mir eine PN** mit dem Titel **VOUCHER-LISTE**.
 Pack alle Voucher die du hast in eine einzige Nachricht!
 Wenn ich deine Nachricht verstehen konnte, schreibe ich dir zurück und aktualisiere diesen Post.
+[/details]
 
 {% else %}
 Wir haben {{ vouchers | length }} Voucher zur Verfügung! Hier sind sie:
