@@ -15,7 +15,7 @@ COPY uv.lock /app/
 
 WORKDIR  /app
 
-RUN uv install
+RUN uv sync
 
 COPY src /app/src
 COPY templates /app/templates
