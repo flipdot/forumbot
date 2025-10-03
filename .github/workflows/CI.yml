@@ -15,12 +15,12 @@ jobs:
         with:
           python-version: '3.13'
           architecture: x64
-      - name: Install poetry
-        run: sudo pip install poetry
+      - name: Install uv
+        run: sudo pip install uv
       - name: Install dependencies
-        run: poetry install
+        run: uv install
       - name: Run tests
-        run: poetry run pytest tests
+        run: uv run pytest tests
         env:
           PYTHONPATH: src
           DISCOURSE_API_KEY: _
