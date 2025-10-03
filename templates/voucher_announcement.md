@@ -98,6 +98,6 @@ Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle einen Vouc
 
 # Wer kümmert sich?
 
-Ich bin ein Helfsbot – kein vollautomatischer Voucherbot! **Ein Mensch muss Verantwortung übernehmen**, und sich insbesondere um **die Kommunikation mit dem CCC** kümmern, um eine Voucherliste zu erhalten!
+Ich bin ein Hilfsbot – kein vollautomatischer Voucherbot! **Ein Mensch muss Verantwortung übernehmen**, und sich insbesondere um **die Kommunikation mit dem CCC** kümmern, um eine Voucherliste zu erhalten!
 
 [color=#ff0000]Bitte **nutzt diesen Thread**, um euch darauf zu einigen, **wer das erledigt!**[/color] Von nix kommt nix.
