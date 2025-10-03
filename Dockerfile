@@ -8,16 +8,18 @@ ENV LANGUAGE de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 RUN locale-gen de_DE.UTF-8
 
-RUN pip install poetry==1.8.4
+RUN pip install uv
 
 COPY pyproject.toml /app/
-COPY poetry.lock /app/
+COPY uv.lock /app/
 
 WORKDIR  /app
-RUN poetry install
+
+RUN uv install
 
 COPY src /app/src
 COPY templates /app/templates
 
-ENTRYPOINT ["poetry", "run"]
+# Set the entrypoint to run the main application file directly with python
+ENTRYPOINT ["uv", "run"]
 CMD python src/app.py
