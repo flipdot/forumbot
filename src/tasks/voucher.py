@@ -367,7 +367,9 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
     logging.info(f"Sent, message_id is {message_id}")
     voucher["message_id"] = message_id
     now = datetime.now()
-    voucher["received_at"] = now
+    voucher["received_at"] = now.replace(tzinfo=pytz.utc).astimezone(
+        pytz.timezone("Europe/Berlin")
+    )
     voucher["history"].append(
         {
             "username": voucher["owner"],
@@ -448,11 +450,6 @@ def render_post_content(data: dict) -> str:
     for v in vouchers:
         if not v["received_at"]:
             continue
-        v["received_at"] = (
-            v["received_at"]
-            .replace(tzinfo=pytz.utc)
-            .astimezone(pytz.timezone("Europe/Berlin"))
-        )
         # delta = v["received_at"] - now
         # v["received_delta"] = babel.dates.format_timedelta(
         #     delta, locale="de_DE", add_direction=True
