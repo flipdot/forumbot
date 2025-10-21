@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import random
 
+import pytz
 from pydiscourse import DiscourseClient
 from pydiscourse.exceptions import DiscourseClientError
 
@@ -447,6 +448,11 @@ def render_post_content(data: dict) -> str:
     for v in vouchers:
         if not v["received_at"]:
             continue
+        v["received_at"] = (
+            v["received_at"]
+            .replace(tzinfo=pytz.utc)
+            .astimezone(pytz.timezone("Europe/Berlin"))
+        )
         # delta = v["received_at"] - now
         # v["received_delta"] = babel.dates.format_timedelta(
         #     delta, locale="de_DE", add_direction=True
