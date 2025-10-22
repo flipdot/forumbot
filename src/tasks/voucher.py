@@ -366,10 +366,8 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
     message_id = res.get("topic_id")
     logging.info(f"Sent, message_id is {message_id}")
     voucher["message_id"] = message_id
-    now = datetime.now()
-    voucher["received_at"] = now.replace(tzinfo=pytz.utc).astimezone(
-        pytz.timezone("Europe/Berlin")
-    )
+    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    voucher["received_at"] = now
     voucher["history"].append(
         {
             "username": voucher["owner"],
