@@ -270,12 +270,8 @@ def handle_private_message_voucher_exhausted_at(
         )
         return
 
-    start_date = datetime.fromisoformat(
-        data["voucher_phase_range"][get_congress_id()]["start"]
-    )
-    end_date = datetime.fromisoformat(
-        data["voucher_phase_range"][get_congress_id()]["end"]
-    )
+    start_date = data["voucher_phase_range"][get_congress_id()]["start"]
+    end_date = data["voucher_phase_range"][get_congress_id()]["end"]
 
     parsed_exhausted_at = datetime.fromisoformat(exhausted_at[1]).astimezone(
         pytz.timezone("Europe/Berlin")
