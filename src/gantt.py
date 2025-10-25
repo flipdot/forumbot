@@ -21,7 +21,10 @@ def plot_gantt_chart(
             if j + 1 < len(history):
                 end = pd.to_datetime(history[j + 1]["received_at"])
             else:
-                end = min(pd.to_datetime("now"), end_date)
+                end = min(
+                    pd.to_datetime("now", utc=True).tz_convert("Europe/Berlin"),
+                    end_date,
+                )
 
             if entry["persons"] > 1:
                 extra_persons = f" + {entry['persons'] - 1}"
