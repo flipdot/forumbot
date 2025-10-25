@@ -217,8 +217,12 @@ def handle_private_message_voucher_phase_range(
         data["voucher_phase_range"] = {}
 
     parsed_ranges = {
-        "start": datetime.fromisoformat(phase_range[1]),
-        "end": datetime.fromisoformat(phase_range[2]),
+        "start": datetime.fromisoformat(phase_range[1]).astimezone(
+            pytz.timezone("Europe/Berlin")
+        ),
+        "end": datetime.fromisoformat(phase_range[2]).astimezone(
+            pytz.timezone("Europe/Berlin")
+        ),
     }
 
     formatted_ranges = {
@@ -227,8 +231,8 @@ def handle_private_message_voucher_phase_range(
     }
 
     data["voucher_phase_range"][get_congress_id()] = {
-        "start": phase_range[1],
-        "end": phase_range[2],
+        "start": parsed_ranges["start"],
+        "end": parsed_ranges["end"],
     }
 
     client.storage.put("voucher", data)
