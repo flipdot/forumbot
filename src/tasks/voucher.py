@@ -277,7 +277,9 @@ def handle_private_message_voucher_exhausted_at(
         data["voucher_phase_range"][get_congress_id()]["end"]
     )
 
-    parsed_exhausted_at = datetime.fromisoformat(exhausted_at[1])
+    parsed_exhausted_at = datetime.fromisoformat(exhausted_at[1]).astimezone(
+        pytz.timezone("Europe/Berlin")
+    )
 
     if parsed_exhausted_at < start_date or parsed_exhausted_at > end_date:
         client.create_post(
@@ -288,7 +290,7 @@ def handle_private_message_voucher_exhausted_at(
         )
         return
 
-    data["voucher_phase_range"][get_congress_id()]["exhausted_at"] = exhausted_at[1]
+    data["voucher_phase_range"][get_congress_id()]["exhausted_at"] = parsed_exhausted_at
 
     client.storage.put("voucher", data)
     client.create_post(
@@ -465,15 +467,11 @@ def render_post_content(data: dict) -> str:
 
     voucher_phase_range = data.get("voucher_phase_range", {}).get(get_congress_id(), {})
     if ts := voucher_phase_range.get("start"):
-        voucher_phase_start = format_date(
-            datetime.fromisoformat(ts), format="long", locale="de_DE"
-        )
+        voucher_phase_start = format_date(ts, format="long", locale="de_DE")
     else:
         voucher_phase_start = None
     if ts := voucher_phase_range.get("end"):
-        voucher_phase_end = format_date(
-            datetime.fromisoformat(ts), format="long", locale="de_DE"
-        )
+        voucher_phase_end = format_date(ts, format="long", locale="de_DE")
     else:
         voucher_phase_end = None
     return render(
@@ -550,7 +548,7 @@ def get_congress_id(now: datetime | None = None) -> str:
 
 
 def update_history_image(client: DiscourseStorageClient) -> None:
-    now = datetime.now()
+    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
     if now.month not in [10, 11, 12]:
         logging.info("Not voucher season. Skipping.")
         return
@@ -562,25 +560,22 @@ def update_history_image(client: DiscourseStorageClient) -> None:
 
     phase_range = data.get("voucher_phase_range", {}).get(get_congress_id(), {})
     if ts := phase_range.get("start"):
-        start_date = datetime.fromisoformat(ts).date()
+        start_date = ts
     else:
         return
 
     if ts := phase_range.get("end"):
-        end_date = datetime.fromisoformat(ts).date()
+        end_date = ts
     else:
         return
 
-    if start_date > (now.date() + timedelta(days=1)):
+    if start_date > (now + timedelta(days=1)):
         return
 
-    if end_date < (now.date() - timedelta(days=3)):
+    if end_date < (now - timedelta(days=3)):
         return
 
-    if ts := phase_range.get("exhausted_at"):
-        exhausted_at = datetime.fromisoformat(ts)
-    else:
-        exhausted_at = None
+    exhausted_at = phase_range.get("exhausted_at")
     fig = plot_gantt_chart(
         data["voucher"],
         start_date=start_date,

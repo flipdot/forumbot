@@ -2,6 +2,7 @@ from datetime import datetime, date
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import pytz
 import yaml
 
 
@@ -40,7 +41,7 @@ def plot_gantt_chart(
                 }
             )
             last_end = end
-        if end_date > datetime.now():
+        if end_date > datetime.now().astimezone(pytz.timezone("Europe/Berlin")):
             days_left = (end_date - last_end).days
 
             if days_left <= 0:
@@ -61,8 +62,8 @@ def plot_gantt_chart(
 
     # Convert data to DataFrame and process dates
     df = pd.DataFrame(data)
-    df["start"] = pd.to_datetime(df["start"])
-    df["end"] = pd.to_datetime(df["end"])
+    # df["start"] = pd.to_datetime(df["start"])
+    # df["end"] = pd.to_datetime(df["end"])
     df["duration"] = df["end"] - df["start"]
 
     # Unique colors for each user
@@ -128,7 +129,8 @@ def plot_gantt_chart(
     ax.set_title("Voucherstats")
     ax.set_yticks(range(len(voucher_ids)))
     ax.set_yticklabels(voucher_ids)
-    date_range = pd.date_range(start_date, end_date)
+    date_range = pd.date_range(start_date.tz_convert("UTC"), end_date.tz_convert("UTC"))
+    date_range = date_range.tz_convert("Europe/Berlin")
 
     ax.set_xticks(date_range)
     ax.set_xticklabels(date_range.strftime("%Y-%m-%d"), rotation=90)
