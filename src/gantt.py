@@ -19,7 +19,9 @@ def plot_gantt_chart(
             sorted(history, key=lambda x: datetime.fromisoformat(x["received_at"]))
         ):
             start = pd.to_datetime(entry["received_at"])
-            if j + 1 < len(history):
+            if "returned_at" in entry:
+                end = pd.to_datetime(entry["returned_at"])
+            elif j + 1 < len(history):
                 end = pd.to_datetime(history[j + 1]["received_at"])
             else:
                 end = min(
@@ -129,6 +131,8 @@ def plot_gantt_chart(
     ax.set_title("Voucherstats")
     ax.set_yticks(range(len(voucher_ids)))
     ax.set_yticklabels(voucher_ids)
+
+    start_date = pd.to_datetime(start_date)
     date_range = pd.date_range(start_date.tz_convert("UTC"), end_date.tz_convert("UTC"))
     date_range = date_range.tz_convert("Europe/Berlin")
 

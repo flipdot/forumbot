@@ -498,11 +498,13 @@ def process_voucher_distribution(client: DiscourseStorageClient):
                     message=f'Prima, vielen Dank für "{new_voucher_code}"!',
                 )
 
+                now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
                 voucher["voucher"] = new_voucher_code
                 voucher["old_owner"] = voucher["owner"]
                 voucher["owner"] = None
                 voucher["message_id"] = None
-                voucher["received_at"] = datetime.now()
+                voucher["history"][-1]["returned_at"] = now.isoformat()
+                voucher["received_at"] = now
                 voucher["persons"] = None
 
         if not voucher["owner"]:
