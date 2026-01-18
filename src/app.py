@@ -19,6 +19,8 @@ import tasks.plenum.post_protocol
 
 import sentry_sdk
 
+from mailing import read_emails
+
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO
 )
@@ -95,6 +97,7 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     schedule.every(12).hours.do(tasks.voucher.update_history_image, client)
     schedule.every().minute.do(tasks.voucher.main, client)
     schedule.every().minute.do(fetch_unread_messages, client)
+    schedule.every().minute.do(read_emails, client, days_back=1)
 
     # schedule.every(15).seconds.do(fetch_unread_messages, client)
     # schedule.every(15).seconds.do(tasks.voucher.main, client)
@@ -105,6 +108,8 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     tasks.voucher.update_history_image(client)
     tasks.voucher.main(client)
     fetch_unread_messages(client)
+    # read_emails(client, days_back=30)
+    read_emails(client, days_back=90)
 
 
 def main():

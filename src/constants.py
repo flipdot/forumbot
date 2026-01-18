@@ -23,6 +23,10 @@ CATEGORY_ID_MAPPING = {
 
 SENTRY_DSN = os.getenv("SENTRY_DSN")
 
+IMAP_HOST = os.getenv("IMAP_HOST", "mail.flipdot.org")
+IMAP_USERNAME = os.getenv("IMAP_USERNAME")
+IMAP_PASSWORD = os.getenv("IMAP_PASSWORD")
+
 DEBUG = "test" in DISCOURSE_CREDENTIALS["api_username"]
 
 assert DISCOURSE_CREDENTIALS[
