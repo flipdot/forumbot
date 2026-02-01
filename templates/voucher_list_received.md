@@ -1,4 +1,4 @@
-@{{ reported_by }} hat mir eine Liste von insgesamt {{ total_voucher }} Voucher geschickt.
+{{ reported_by }} hat mir eine Liste von insgesamt {{ total_voucher }} Voucher geschickt.
 
 Ich beginne nun damit, sie zu verteilen.
 

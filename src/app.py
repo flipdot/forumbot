@@ -108,8 +108,8 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     tasks.voucher.update_history_image(client)
     tasks.voucher.main(client)
     fetch_unread_messages(client)
-    # read_emails(client, days_back=30)
-    read_emails(client, days_back=90)
+    read_emails(client, days_back=30)
+    # read_emails(client, days_back=300)
 
 
 def main():

@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime, timedelta
+from email.message import Message
 from pathlib import Path
 import random
 
@@ -187,7 +188,7 @@ def handle_private_message_voucher_list(
     )
     post_content = render(
         "voucher_list_received.md",
-        reported_by=username,
+        reported_by=f"@{username}",
         total_voucher=len(received_voucher),
         bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
     )
@@ -594,6 +595,64 @@ def update_history_image(client: DiscourseStorageClient) -> None:
         logger.error(f"Unexpected response from Discourse: {res}")
 
     client.storage.put("voucher", data)
+
+
+def process_email_voucheringress(
+    client: DiscourseStorageClient, mail_param: str | None, msg: Message
+) -> None:
+    if not mail_param:
+        # TODO: check if voucher distribution already started. Mails are read at regular intervals.
+        _mail_new_voucherlist(client, msg)
+    # subject, encoding = decode_header(msg["Subject"])[0]
+
+
+def _mail_new_voucherlist(client: DiscourseStorageClient, msg: Message) -> None:
+    """
+    The mail that is processed by this function is supposed to contain a list of vouchers.
+    We'll start a voucher distribution process with these vouchers.
+    """
+    content = _mail_msg_to_str(msg, accepted_content_types=("text/plain",))
+    # Get every line between BEGIN VOUCHER LIST and END VOUCHER LIST
+    voucher_match = re.search(
+        r"BEGIN VOUCHER LIST(.*?)END VOUCHER LIST", content, re.DOTALL
+    )
+    if not voucher_match:
+        logger.error("No voucher list found in email", extra={"mail_content": content})
+        return
+    voucher_lines = voucher_match.group(1)
+    voucher_codes = [line.strip() for line in voucher_lines.split()]
+    print(voucher_codes)
+
+
+def _mail_msg_to_str(
+    msg: Message, accepted_content_types=("text/plain", "text/html")
+) -> str:
+    """
+    Convert an email.message.Message to a string by extracting its payload.
+    Handles both plain text and multipart messages.
+    """
+    result = ""
+    if msg.is_multipart():
+        parts = []
+        for part in msg.walk():
+            content_type = part.get_content_type()
+            content_disposition = str(part.get("Content-Disposition"))
+
+            if (
+                content_type in accepted_content_types
+                and "attachment" not in content_disposition
+            ):
+                body = part.get_payload(decode=True)
+                if body:
+                    encoding = part.get_content_charset() or "utf-8"
+                    parts.append(body.decode(encoding, errors="replace"))
+        result = "\n".join(parts)
+    else:
+        body = msg.get_payload(decode=True)
+        if body:
+            encoding = msg.get_content_charset() or "utf-8"
+            result = body.decode(encoding, errors="replace")
+    return result
 
 
 def main(client: DiscourseStorageClient) -> None:

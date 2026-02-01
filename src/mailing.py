@@ -1,10 +1,16 @@
 from client import DiscourseStorageClient
 import imaplib
 import email
-from email.header import decode_header
+import re
+import logging
 from datetime import datetime, timedelta
 
 from constants import IMAP_HOST, IMAP_USERNAME, IMAP_PASSWORD
+from tasks.voucher import process_email_voucheringress
+
+logger = logging.getLogger(__name__)
+
+matcher = re.compile(r"bot(?:\+(\w+)(?:-([\w-]+))?)?@flipdot\.org")
 
 
 def imap_date_format(dt: datetime) -> str:
@@ -47,29 +53,16 @@ def read_emails(discourse_client: DiscourseStorageClient, days_back: int = 90):
             if not isinstance(response_part, tuple):
                 continue
             msg = email.message_from_bytes(response_part[1])
-            subject, encoding = decode_header(msg["Subject"])[0]
-            if msg.is_multipart():
-                for part in msg.walk():
-                    content_type = part.get_content_type()
-                    content_disposition = str(part.get("Content-Disposition"))
+            delivered_to = msg["Delivered-To"]
 
-                    body = part.get_payload(decode=True)
-
-                    if (
-                        body
-                        # and content_type == "text/plain"
-                        # and "attachment" not in content_disposition
-                    ):
-                        box_txt = f" Content type: {content_type}, disposition: {content_disposition} "
-                        box_size = len(box_txt)
-                        print("┌" + "─" * box_size + "┐")
-                        print(f"│{box_txt}│")
-                        print("└" + "─" * box_size + "┘")
-                        print(body.decode())
-            else:
-                body = msg.get_payload(decode=True)
-                print(body)
-
-            # TODO:
-            #  - Check X-Original-To header to route to correct task (voucher)
-            #  - Pass email content to task handler
+            match m.groups() if (m := matcher.match(delivered_to)) else None:
+                case None:
+                    logger.info(f"Email not addressed to bot: {delivered_to}")
+                    continue
+                case (None, _):
+                    logger.info(f"Not triggering any task for email to: {delivered_to}")
+                    continue
+                case ("voucheringress", params):
+                    process_email_voucheringress(discourse_client, params, msg)
+                case (task_name, params):
+                    logger.info(f"Unknown task '{task_name}' with params: {params}")
