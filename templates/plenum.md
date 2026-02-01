@@ -5,7 +5,7 @@ Wir wollen am {{ plenum_date.strftime('%A, den **%x**') }} plenieren. Bitte lies
 Plenum: 18:00
 Putzen: 19:00
 
-Das Plenum findet vor Ort in den Räumen des flipdot e.V. statt.
+Das Plenum findet vor Ort sowie [via Jitsi](https://jitsi.freifunk-duesseldorf.de/PlenumFlipDot) in den Räumen des flipdot e.V. statt.
 
 Wir sammeln und protokollieren auf dem [Pad]({{ pad_url }}). Nach dem Plenum werde ich den Inhalt des Pads hier einfügen.
 
