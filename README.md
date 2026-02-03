@@ -8,9 +8,12 @@
 
 ## Deployment
 
-The python script is running on a server, configured
-[in our ansible playbook](https://gitlab.com/flipdot/devops/tree/master/roles/flipbot).
-Any change on the master branch will be automatically deployed.
+Changes on the master branch are automatically build into a docker image and
+published at [docker hub](https://hub.docker.com/r/flipdot/forumbot).
+After it is published, you need to adjust [this ansible playbook](https://code.flipdot.org/flipdot-infra/ansible/src/branch/main/host_vars/spouting-whale.yml)
+
+Checkout if a change to the ansible playbook is automatically deployed yet - at the time of writing this,
+you need to run the playbook manually. See details over at the other repository.
 
 ## Developing
 
