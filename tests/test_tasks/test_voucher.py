@@ -11,9 +11,9 @@ def test_encode_decode_voucher_identifier():
     for index in range(256):
         for history_length in range(256):
             encoded = encode_voucher_identifier(index, history_length)
-            assert (
-                is_alphanumeric_lowercase.match(encoded) is not None
-            ), f"Encoded string '{encoded}' does not match the expected format"
+            assert is_alphanumeric_lowercase.match(encoded) is not None, (
+                f"Encoded string '{encoded}' does not match the expected format"
+            )
             decoded_index, decoded_history_length = decode_voucher_identifier(encoded)
 
             assert index == decoded_index

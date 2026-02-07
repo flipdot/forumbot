@@ -14,7 +14,6 @@ class DiscourseStorageError(Exception):
 
 
 class DiscourseStorageClient(DiscourseClient):
-
     def __init__(
         self, *args, storage_cls: type["BaseDiscourseStorage"] | None = None, **kwargs
     ):
@@ -37,7 +36,6 @@ class DiscourseStorageClient(DiscourseClient):
 
 
 class BaseDiscourseStorage(ABC):
-
     def __init__(self, client: "DiscourseStorageClient"):
         self.client = client
 
