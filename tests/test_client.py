@@ -2,11 +2,7 @@ import pytest
 import yaml
 from urllib.parse import quote_plus
 
-from client import (
-    DiscourseStorageClient,
-    DiscourseStorageError,
-    InMemoryDiscourseStorage,
-)
+from client import DiscourseStorageClient, DiscourseStorageError
 
 HOST = "https://discourse.example.com"
 API_USERNAME = "testuser"
@@ -287,14 +283,8 @@ def test_storage_put_existing_key(responses):
     assert quote_plus(expected_yaml) in body_str
 
 
-def test_storage_custom_storage_cls():
-    client = DiscourseStorageClient(
-        host=HOST,
-        api_username=API_USERNAME,
-        api_key=API_KEY,
-        storage_cls=InMemoryDiscourseStorage,
-    )
+def test_storage_custom_storage_cls(dummy_storage_client):
+    client = dummy_storage_client
 
     client.storage.put("alpha", {"value": 1})
     assert client.storage.get("alpha") == {"value": 1}
-    assert isinstance(client.storage, InMemoryDiscourseStorage)

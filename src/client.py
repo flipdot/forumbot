@@ -1,4 +1,5 @@
 from typing import Dict
+from abc import ABC, abstractmethod
 
 from pydiscourse import DiscourseClient
 import yaml
@@ -15,11 +16,11 @@ class DiscourseStorageError(Exception):
 class DiscourseStorageClient(DiscourseClient):
 
     def __init__(
-        self, *args, storage_cls: type["DiscourseStorage"] | None = None, **kwargs
+        self, *args, storage_cls: type["BaseDiscourseStorage"] | None = None, **kwargs
     ):
         super().__init__(*args, **kwargs)
         storage_cls = storage_cls or DiscourseStorage
-        self.storage = storage_cls(self)
+        self.storage: BaseDiscourseStorage = storage_cls(self)
 
     # TODO: Add this method upstream
     def private_messages_sent(self, username=None, **kwargs):
@@ -35,19 +36,31 @@ class DiscourseStorageClient(DiscourseClient):
         return self._get(f"/t/{topic_id}.json", **kwargs)
 
 
-class DiscourseStorage:
+class BaseDiscourseStorage(ABC):
+
+    def __init__(self, client: "DiscourseStorageClient"):
+        self.client = client
+
+    @abstractmethod
+    def get(self, key, default=None) -> Dict: ...
+
+    @abstractmethod
+    def put(self, key, value): ...
+
+
+class DiscourseStorage(BaseDiscourseStorage):
     """
     Uses a PM to itself to persist data. This way, we won't need to care about storage.
     """
 
     def __init__(self, client: DiscourseStorageClient):
-        self.client = client
+        super().__init__(client)
         self._storage_ids: Dict[str, tuple[int | None, int | None]] = {}
         page = 0
         while True:
             logger.info(f"Loading page {page} for initializing DiscourseStorage")
             messages = self.client.private_messages_sent(page=page)
-            topics = messages["topic_list"]["topics"]
+            topics = messages["topic_list"]["topics"] if messages else []
             if not topics:
                 break
             # Remove messages with participants
@@ -100,19 +113,3 @@ class DiscourseStorage:
                 post_id = self.client.posts(topic_id)["post_stream"]["posts"][0]["id"]
                 self._storage_ids[key] = topic_id, post_id
             self.client.update_post(post_id, data)
-
-
-class InMemoryDiscourseStorage:
-    """Simple in-memory storage for testing purposes."""
-
-    def __init__(self, client: DiscourseStorageClient):
-        self.client = client
-        self._storage: Dict = {}
-
-    def get(self, key, default=None) -> Dict:
-        if key not in self._storage:
-            return default or {}
-        return self._storage[key]
-
-    def put(self, key, value):
-        self._storage[key] = value
