@@ -26,8 +26,11 @@ def test_decode_raises_value_error_on_invalid_string(input_string):
         decode_voucher_identifier(input_string)
 
 
-def test_encode_voucher_identifier_raises_value_error_on_out_of_range_values():
+@pytest.mark.parametrize(
+    "index, history_length", [(-1, 0), (0, -1), (256, 0), (0, 256)]
+)
+def test_encode_voucher_identifier_raises_value_error_on_out_of_range_values(
+    index, history_length
+):
     with pytest.raises(ValueError):
-        encode_voucher_identifier(256, 0)
-    with pytest.raises(ValueError):
-        encode_voucher_identifier(0, 256)
+        encode_voucher_identifier(index, history_length)
