@@ -35,23 +35,26 @@ Clone this repo, make your changes, build a new container:
 
 Or, if you want to develop without docker:
 
-    poetry install
-    DISCOURSE_API_KEY=fefe python src/app.py
+    uv sync
+    DISCOURSE_API_KEY=fefe uv run python src/app.py
     # or with the test user
-    DISCOURSE_API_KEY=fefe DISCOURSE_USERNAME=flipbot_test python src/app.py
+    DISCOURSE_API_KEY=fefe DISCOURSE_USERNAME=flipbot_test uv run python src/app.py
 
 You can get the credentials of flipdot_test in our forum: https://forum.flipdot.org/t/api-key-fuer-flipbot-test/3755
 
+Copy .env.example to .env and set the API key there, so you don't have to set it every time.
+
+    cp .env.example .env
+
 Execute tests:
 
-    # an API key needs to be set, but you can use an invalid value
-    DISCOURSE_API_KEY=_ pipenv run nosetests
+    PYTHONPATH=src uv run pytest
 
 ### How to add a job?
 
 Start by copying `src/tasks/hello_world.py`. You can run your new task directly:
 
-    python src/app.py --dry --run_task hello_world
+    uv run python src/app.py --dry --run_task hello_world
 
 ...where "hello_world" is the name of the python file.
 

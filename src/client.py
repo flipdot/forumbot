@@ -14,9 +14,12 @@ class DiscourseStorageError(Exception):
 
 class DiscourseStorageClient(DiscourseClient):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self, *args, storage_cls: type["DiscourseStorage"] | None = None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
-        self.storage = DiscourseStorage(self)
+        storage_cls = storage_cls or DiscourseStorage
+        self.storage = storage_cls(self)
 
     # TODO: Add this method upstream
     def private_messages_sent(self, username=None, **kwargs):
@@ -39,7 +42,7 @@ class DiscourseStorage:
 
     def __init__(self, client: DiscourseStorageClient):
         self.client = client
-        self._storage_ids = {}
+        self._storage_ids: Dict[str, tuple[int | None, int | None]] = {}
         page = 0
         while True:
             logger.info(f"Loading page {page} for initializing DiscourseStorage")
@@ -97,3 +100,19 @@ class DiscourseStorage:
                 post_id = self.client.posts(topic_id)["post_stream"]["posts"][0]["id"]
                 self._storage_ids[key] = topic_id, post_id
             self.client.update_post(post_id, data)
+
+
+class InMemoryDiscourseStorage:
+    """Simple in-memory storage for testing purposes."""
+
+    def __init__(self, client: DiscourseStorageClient):
+        self.client = client
+        self._storage: Dict = {}
+
+    def get(self, key, default=None) -> Dict:
+        if key not in self._storage:
+            return default or {}
+        return self._storage[key]
+
+    def put(self, key, value):
+        self._storage[key] = value
