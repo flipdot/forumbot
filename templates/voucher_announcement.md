@@ -96,8 +96,9 @@ Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle einen Vouc
   - *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
 {% endif %}
 
-# Wer kümmert sich?
+# Was zu tun ist
 
-Ich bin ein Hilfsbot – kein vollautomatischer Voucherbot! **Ein Mensch muss Verantwortung übernehmen**, und sich insbesondere um **die Kommunikation mit dem CCC** kümmern, um eine Voucherliste zu erhalten!
+Ein Mensch soll sich beim CCC melden, um unseren Bedarf zu übermitteln und zu bestätigen, dass unsere Mailadresse noch funktioniert.
+Die letzten Male gab es eine Mail mit einem Link zu einem Formular. Prüft das bitte einmal. Mehrere Mitglieder sind in unserem Mailcow im CC hinterlegt.
 
-[color=#ff0000]Bitte **nutzt diesen Thread**, um euch darauf zu einigen, **wer das erledigt!**[/color] Von nix kommt nix.
+Wenn wir vom CCC wie gewohnt eine Mail mit Vouchern erhalten, werde ich diese Mail automatisch verarbeiten und die Voucher an euch verteilen.

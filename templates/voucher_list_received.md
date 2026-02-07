@@ -6,8 +6,8 @@ Ich beginne nun damit, sie zu verteilen.
 
 - Du wirst eine Nachricht von mir mit deinem Voucher erhalten
 - Du musst schnellstmöglich dein Ticket **kaufen und bezahlen**
-- Du wirst einen Voucher erhalten
-- Schicke diesen Voucher an mich zurück, indem du auf meine PN antwortest
+- Bei der Bestellung wirst du nach einer E-Mail-Adresse gefragt, an die der nächste Voucher geschickt werden soll.
+  - Du bekommst eine personalisierte E-Mail-Adresse von mir in meiner Nachricht. Gib diese bei der Bestellung an.
 
 **Bitte beeile dich mit dem Kauf deines Tickets.** Die Voucherphase ist kurz und andere warten darauf, sich ein Ticket kaufen zu können.
 

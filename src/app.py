@@ -1,7 +1,6 @@
 import argparse
 import logging
 import sys
-from datetime import datetime
 from typing import Optional
 
 from client import DiscourseClient, DiscourseStorageClient
@@ -61,11 +60,6 @@ def disable_request(
 
 
 def fetch_unread_messages(client: DiscourseStorageClient):
-    if datetime.now().month not in [10, 11, 12]:
-        # PN feature currently only used for voucher distribution.
-        # Voucher distribution is only relevant in october, november and maybe december
-        return
-
     # TODO: Something is still wrong about the unseen thingy. Dunno when it get's set.
     topics = [
         t
@@ -75,10 +69,8 @@ def fetch_unread_messages(client: DiscourseStorageClient):
         or t["highest_post_number"] > t["last_read_post_number"]
     ]
     for topic in topics:
-        was_handled = False
         posts = client.topic_posts(topic["id"])
-        if datetime.now().month in [10, 11, 12]:
-            was_handled = tasks.voucher.private_message_handler(client, topic, posts)
+        was_handled = tasks.voucher.private_message_handler(client, topic, posts)
 
         if not was_handled:
             client.create_post(
