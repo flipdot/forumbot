@@ -1,14 +1,13 @@
 import logging
 
 from client import DiscourseStorageClient
-from constants import DEBUG
+from constants import DEBUG, CATEGORY_ID_MAPPING
 from tasks.plenum import (
     get_next_plenum_date,
     topic_exists,
     PAD_BASE_URL,
     PROTOCOL_PLACEHOLDER,
     PLENUM_CATEGORY_NAME,
-    CATEGORY_ID_MAPPING,
 )
 from utils import render
 from datetime import datetime
