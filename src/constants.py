@@ -28,6 +28,11 @@ IMAP_USERNAME = os.getenv("IMAP_USERNAME")
 IMAP_PASSWORD = os.getenv("IMAP_PASSWORD")
 
 DEBUG = "test" in DISCOURSE_CREDENTIALS["api_username"]
+FORCE_VOUCHER_PHASE = os.getenv("FORCE_VOUCHER_PHASE", "false").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 
 assert DISCOURSE_CREDENTIALS["api_key"], (
     "Environment variable DISCOURSE_API_KEY not set"

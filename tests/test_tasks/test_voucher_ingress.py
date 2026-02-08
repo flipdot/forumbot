@@ -115,6 +115,7 @@ def test_process_email_new_voucherlist_invalid_format(dummy_storage_client, capl
 
 def test_process_email_voucher_returned_success(dummy_storage_client, mocker):
     congress_id = get_congress_id()
+
     voucher_data = {
         "index": 0,
         "voucher": "CHAOSOLD",
@@ -136,7 +137,8 @@ def test_process_email_voucher_returned_success(dummy_storage_client, mocker):
     mocker.patch.object(dummy_storage_client, "create_post")
 
     # Encode param for index 0 and history length 1
-    mail_param = encode_voucher_identifier(0, 1)
+    mail_param = encode_voucher_identifier(0, 1, congress_id)
+
     msg = create_email(
         "You received a voucher",
         """
@@ -160,6 +162,7 @@ You can use it to buy a ticket for 39C3 here""",
 
 def test_process_email_voucher_returned_no_code(dummy_storage_client, caplog):
     congress_id = get_congress_id()
+    congress_id_lower = congress_id.lower()
     voucher_data = {
         "voucher": [
             {
@@ -180,7 +183,7 @@ def test_process_email_voucher_returned_no_code(dummy_storage_client, caplog):
     }
     dummy_storage_client.storage.put("voucher", voucher_data)
 
-    mail_param = encode_voucher_identifier(0, 1)
+    mail_param = encode_voucher_identifier(0, 1, congress_id_lower)
     # Email without CHAOS voucher
     msg = create_email("Nonsense", "That is a fake email, not sent by CCC")
 
@@ -198,7 +201,9 @@ def test_process_email_voucher_returned_no_code(dummy_storage_client, caplog):
     assert caplog.records[0].mail_subject == "Nonsense"
 
 
-@pytest.mark.parametrize("invalid_param", ["invalid", "0", "!"])
+@pytest.mark.parametrize(
+    "invalid_param", ["invalid", "0", "!", "39c3-", "39c3-invalid"]
+)
 def test_process_email_voucher_returned_invalid_param(
     dummy_storage_client, caplog, invalid_param
 ):
@@ -211,6 +216,7 @@ def test_process_email_voucher_returned_invalid_param(
 
 
 def test_process_email_voucher_returned_no_active_topic(dummy_storage_client, mocker):
+    congress_id_lower = "39c3"
     voucher_data = {
         "index": 0,
         "voucher": "CHAOSOLD",
@@ -232,7 +238,8 @@ def test_process_email_voucher_returned_no_active_topic(dummy_storage_client, mo
     # Mock create_post to avoid real API calls
     mocker.patch.object(dummy_storage_client, "create_post")
 
-    mail_param = encode_voucher_identifier(0, 1)
+    mail_param = encode_voucher_identifier(0, 1, congress_id_lower)
+
     msg = create_email(
         "You received a voucher",
         "CHAOSRETURNED",
@@ -250,6 +257,7 @@ def test_process_email_voucher_returned_no_active_topic(dummy_storage_client, mo
 
 def test_process_email_voucher_returned_after_deadline(dummy_storage_client, mocker):
     congress_id = get_congress_id()
+    congress_id_lower = congress_id.lower()
     voucher_data = {
         "index": 0,
         "voucher": "CHAOSOLD",
@@ -285,7 +293,8 @@ def test_process_email_voucher_returned_after_deadline(dummy_storage_client, moc
     # Mock create_post
     mocker.patch.object(dummy_storage_client, "create_post")
 
-    mail_param = encode_voucher_identifier(0, 1)
+    mail_param = encode_voucher_identifier(0, 1, congress_id_lower)
+
     msg = create_email(
         "You received a voucher",
         "CHAOSRETURNED",

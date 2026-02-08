@@ -357,22 +357,30 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> boo
         return True
 
 
-def decode_voucher_identifier(data: str) -> tuple[int, int]:
+def decode_voucher_identifier(data: str) -> tuple[str, int, int]:
     data = data.strip().upper()
 
-    if missing_padding := len(data) % 8:
-        data += "=" * (8 - missing_padding)
+    if data.count("-") != 1:
+        raise ValueError(
+            "Invalid voucher identifier format: Expected two part identifier separated by a single hyphen"
+        )
 
-    b32_decoded_data = base64.b32decode(data)
+    congress_id, _, encoded_part = data.rpartition("-")
+
+    if missing_padding := len(encoded_part) % 8:
+        encoded_part += "=" * (8 - missing_padding)
+
+    b32_decoded_data = base64.b32decode(encoded_part)
     try:
-        return struct.unpack(">BB", b32_decoded_data)
+        index, history_length = struct.unpack(">BB", b32_decoded_data)
+        return congress_id, index, history_length
     except struct.error as e:
         raise ValueError("Invalid voucher identifier format") from e
 
 
-def encode_voucher_identifier(index: int, history_length: int) -> str:
+def encode_voucher_identifier(index: int, history_length: int, congress_id: str) -> str:
     try:
-        return (
+        encoded = (
             base64.b32encode(struct.pack(">BB", index, history_length))
             .rstrip(b"=")
             .decode()
@@ -380,14 +388,16 @@ def encode_voucher_identifier(index: int, history_length: int) -> str:
         )
     except struct.error as e:
         raise ValueError("Index and history_length must be between 0 and 255") from e
+    return f"{congress_id.lower()}-{encoded}"
 
 
 def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
     if voucher["message_id"]:
         raise ValueError("Voucher already sent")
     username = voucher["owner"]
+    congress_id = get_congress_id()
     voucher_identifier = encode_voucher_identifier(
-        voucher["index"], len(voucher["history"]) + 1
+        voucher["index"], len(voucher["history"]) + 1, congress_id
     )
     voucher_ingress_email = f"bot+voucheringress-{voucher_identifier}@flipdot.org"
     message_content = render(
@@ -584,7 +594,7 @@ def get_congress_id(now: datetime | None = None) -> str:
 
 def update_history_image(client: DiscourseStorageClient) -> None:
     now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
-    if now.month not in [10, 11, 12]:
+    if now.month not in [10, 11, 12] and not constants.FORCE_VOUCHER_PHASE:
         logging.info("Not voucher season. Skipping.")
         return
 
@@ -706,9 +716,11 @@ def _mail_voucher_returned(
     for distribution again.
     """
     try:
-        voucher_index, history_length = decode_voucher_identifier(mail_param)
+        congress_id, voucher_index, history_length = decode_voucher_identifier(
+            mail_param
+        )
     except ValueError:
-        logger.error(
+        logger.exception(
             "Invalid mail_param in email",
             extra={
                 "mail_param": mail_param,
@@ -721,7 +733,6 @@ def _mail_voucher_returned(
         return
     data = client.storage.get("voucher", {})
 
-    congress_id = get_congress_id()
     if congress_id not in data.get("voucher_topics", {}):
         logger.info(
             f"No active voucher topic for {congress_id}, ignoring returned voucher."
@@ -840,7 +851,7 @@ def _mail_msg_to_str(
 def main(client: DiscourseStorageClient) -> None:
     # voucher only relevant in october, november and maybe december
     now = datetime.now()
-    if now.month not in [10, 11, 12]:
+    if now.month not in [10, 11, 12] and not constants.FORCE_VOUCHER_PHASE:
         logging.info("Not voucher season. Skipping.")
         return
 
