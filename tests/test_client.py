@@ -11,21 +11,11 @@ JSON_CONTENT_TYPE = "application/json; charset=utf-8"
 
 
 @pytest.fixture
-def client(responses):
+def client():
     """
-    Creates a DiscourseStorageClient with a mocked initialization.
+    Creates a DiscourseStorageClient.
     By default, this sets up an empty storage (no existing STORAGE_ topics).
     """
-    # Mock the first page of private messages (Empty)
-    responses.add(
-        responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json",
-        json={"topic_list": {"topics": []}},
-        status=200,
-        content_type=JSON_CONTENT_TYPE,
-        match_querystring=False,
-    )
-
     return DiscourseStorageClient(host=HOST, api_username=API_USERNAME, api_key=API_KEY)
 
 
@@ -46,75 +36,16 @@ def test_private_messages_sent(client, responses):
     assert res["topic_list"]["topics"][0]["id"] == 1
 
 
-def test_storage_init_scans_existing_topics(responses):
+def test_storage_get_lazy_load_success(client, responses):
     """
-    Verify that initializing the client correctly parses existing storage topics.
+    Test flow: Init -> get('settings') -> search for topic -> fetch post -> return content.
     """
-    # Mock Page 0: Contains mix of valid and invalid topics
+    # 1. Mock SEARCH call
+    query = quote_plus(f"STORAGE_settings @{API_USERNAME} in:title in:messages")
     responses.add(
         responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json",
-        json={
-            "topic_list": {
-                "topics": [
-                    # Valid Storage
-                    {"id": 101, "title": "STORAGE_app_config", "participants": []},
-                    # Invalid: Has participants
-                    {
-                        "id": 102,
-                        "title": "STORAGE_shared_data",
-                        "participants": [{"username": "other"}],
-                    },
-                    # Invalid: Wrong Prefix
-                    {"id": 103, "title": "Just a message", "participants": []},
-                ]
-            }
-        },
-        match_querystring=False,
-        content_type=JSON_CONTENT_TYPE,
-    )
-
-    # Mock Page 1: Empty (stops the while loop)
-    responses.add(
-        responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json?page=1",
-        json={"topic_list": {"topics": []}},
-        match_querystring=True,
-        content_type=JSON_CONTENT_TYPE,
-    )
-
-    client = DiscourseStorageClient(
-        host=HOST, api_username=API_USERNAME, api_key=API_KEY
-    )
-
-    ids = client.storage._storage_ids
-
-    assert "app_config" in ids
-    assert ids["app_config"] == (101, None)
-    assert "shared_data" not in ids
-    assert "Just a message" not in ids
-
-
-def test_storage_get_lazy_load_success(responses):
-    """
-    Test flow: Init -> get('settings') -> fetch topic -> fetch post -> return content.
-    """
-    # 1. Setup Init (Found Topic 200)
-    responses.add(
-        responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json",
-        json={
-            "topic_list": {
-                "topics": [{"id": 200, "title": "STORAGE_settings", "participants": []}]
-            }
-        },
-        content_type=JSON_CONTENT_TYPE,
-    )
-    # Page 1 empty
-    responses.add(
-        responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json?page=1",
-        json={"topic_list": {"topics": []}},
+        f"{HOST}/search.json?q={query}",
+        json={"topics": [{"id": 200, "title": "STORAGE_settings"}]},
         content_type=JSON_CONTENT_TYPE,
     )
 
@@ -135,39 +66,34 @@ def test_storage_get_lazy_load_success(responses):
         content_type=JSON_CONTENT_TYPE,
     )
 
-    client = DiscourseStorageClient(
-        host=HOST, api_username=API_USERNAME, api_key=API_KEY
-    )
-
     result = client.storage.get("settings")
 
     assert result == data_payload
     assert client.storage._storage_ids["settings"] == (200, 555)
 
 
-def test_storage_get_not_found(client):
-    """Test get() returns default when key doesn't exist."""
+def test_storage_get_not_found(client, responses):
+    """Test get() returns default when key doesn't exist (search returns empty)."""
+    query = quote_plus(f"STORAGE_non_existent @{API_USERNAME} in:title in:messages")
+    responses.add(
+        responses.GET,
+        f"{HOST}/search.json?q={query}",
+        json={"topics": []},
+        content_type=JSON_CONTENT_TYPE,
+    )
+
     assert client.storage.get("non_existent") == {}
     assert client.storage.get("non_existent", default="foo") == "foo"
 
 
-def test_storage_get_security_check(responses):
+def test_storage_get_security_check(client, responses):
     """Ensure we don't read data if the post is not marked as 'yours'."""
-    # Init finding a topic
+    # SEARCH finding a topic
+    query = quote_plus(f"STORAGE_hacked @{API_USERNAME} in:title in:messages")
     responses.add(
         responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json",
-        json={
-            "topic_list": {
-                "topics": [{"id": 300, "title": "STORAGE_hacked", "participants": []}]
-            }
-        },
-        content_type=JSON_CONTENT_TYPE,
-    )
-    responses.add(
-        responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json?page=1",
-        json={"topic_list": {"topics": []}},
+        f"{HOST}/search.json?q={query}",
+        json={"topics": [{"id": 300, "title": "STORAGE_hacked"}]},
         content_type=JSON_CONTENT_TYPE,
     )
 
@@ -190,16 +116,19 @@ def test_storage_get_security_check(responses):
         content_type=JSON_CONTENT_TYPE,
     )
 
-    client = DiscourseStorageClient(
-        host=HOST, api_username=API_USERNAME, api_key=API_KEY
-    )
-
     with pytest.raises(DiscourseStorageError, match="was not created by ourself"):
         client.storage.get("hacked")
 
 
 def test_storage_put_new_key(client, responses):
-    """Test creating a new storage item (POST)."""
+    """Test creating a new storage item when search returns nothing."""
+    query = quote_plus(f"STORAGE_new_key @{API_USERNAME} in:title in:messages")
+    responses.add(
+        responses.GET,
+        f"{HOST}/search.json?q={query}",
+        json={"topics": []},
+        content_type=JSON_CONTENT_TYPE,
+    )
 
     data_to_store = {"new": "value"}
 
@@ -225,24 +154,15 @@ def test_storage_put_new_key(client, responses):
     assert quote_plus("new: value") in req_body
 
 
-def test_storage_put_existing_key(responses):
-    """Test updating an existing storage item (PUT)."""
+def test_storage_put_existing_key(client, responses):
+    """Test updating an existing storage item found via search."""
 
-    # 1. Init with existing key
+    # 1. Search finding existing key
+    query = quote_plus(f"STORAGE_existing @{API_USERNAME} in:title in:messages")
     responses.add(
         responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json",
-        json={
-            "topic_list": {
-                "topics": [{"id": 500, "title": "STORAGE_existing", "participants": []}]
-            }
-        },
-        content_type=JSON_CONTENT_TYPE,
-    )
-    responses.add(
-        responses.GET,
-        f"{HOST}/topics/private-messages-sent/{API_USERNAME}.json?page=1",
-        json={"topic_list": {"topics": []}},
+        f"{HOST}/search.json?q={query}",
+        json={"topics": [{"id": 500, "title": "STORAGE_existing"}]},
         content_type=JSON_CONTENT_TYPE,
     )
 
@@ -263,10 +183,6 @@ def test_storage_put_existing_key(responses):
         content_type=JSON_CONTENT_TYPE,
     )
 
-    client = DiscourseStorageClient(
-        host=HOST, api_username=API_USERNAME, api_key=API_KEY
-    )
-
     new_data = {"updated": "content"}
     client.storage.put("existing", new_data)
 
@@ -274,13 +190,8 @@ def test_storage_put_existing_key(responses):
     put_call = [c for c in responses.calls if c.request.method == "PUT"][0]
 
     expected_yaml = yaml.safe_dump(new_data).strip()
-    body_str = (
-        put_call.request.body
-        if isinstance(put_call.request.body, str)
-        else put_call.request.body.decode()
-    )
 
-    assert quote_plus(expected_yaml) in body_str
+    assert quote_plus(expected_yaml) in put_call.request.body
 
 
 def test_storage_custom_storage_cls(dummy_storage_client):

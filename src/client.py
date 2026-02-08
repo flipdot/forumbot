@@ -34,6 +34,10 @@ class DiscourseStorageClient(DiscourseClient):
     def single_topic(self, topic_id, **kwargs):
         return self._get(f"/t/{topic_id}.json", **kwargs)
 
+    def search(self, query, **kwargs):
+        # Original method forces a "term" parameter but q works fine for us.
+        return self._get("/search.json", q=query, **kwargs)
+
 
 class BaseDiscourseStorage(ABC):
     def __init__(self, client: "DiscourseStorageClient"):
@@ -54,31 +58,31 @@ class DiscourseStorage(BaseDiscourseStorage):
     def __init__(self, client: DiscourseStorageClient):
         super().__init__(client)
         self._storage_ids: Dict[str, tuple[int | None, int | None]] = {}
-        page = 0
-        while True:
-            logger.info(f"Loading page {page} for initializing DiscourseStorage")
-            messages = self.client.private_messages_sent(page=page)
-            topics = messages["topic_list"]["topics"] if messages else []
-            if not topics:
-                break
-            # Remove messages with participants
-            # The config is only safe to be assumed when created by ourself
-            topics = [
-                t
-                for t in topics
-                if len(t["participants"]) == 0 and t["title"].startswith("STORAGE_")
-            ]
-            for topic in topics:
-                key = topic["title"].replace("STORAGE_", "")
-                # first is topic id, second is post id. Be lazy and fetch the post id later
-                self._storage_ids[key] = topic["id"], None
-                logger.info(
-                    f'Topic id "{topic["id"]}" contains storage for key "{key}"'
-                )
-            page += 1
+
+    def _resolve_key(self, key: str) -> tuple[int | None, int | None]:
+        if key in self._storage_ids:
+            return self._storage_ids[key]
+
+        logger.info(f'Resolving storage key "{key}" via search')
+        query = f"STORAGE_{key} @{self.client.api_username} in:title in:messages"
+        search_results = self.client.search(query)
+
+        topics = search_results.get("topics", [])
+        # Filter for exact title match and where the bot is the only participant (message to self)
+        for topic in topics:
+            if topic["title"] == f"STORAGE_{key}":
+                topic_id = topic["id"]
+                # Search results only give us the topic ID. Fetch the first post ID.
+                post_id = self.client.posts(topic_id)["post_stream"]["posts"][0]["id"]
+                self._storage_ids[key] = topic_id, post_id
+                logger.info(f'Resolved storage key "{key}" to topic {topic_id}')
+                return topic_id, post_id
+
+        logger.info(f'No storage topic found for key "{key}"')
+        return None, None
 
     def get(self, key, default=None) -> Dict:
-        topic_id, post_id = self._storage_ids.get(key, (None, None))
+        topic_id, post_id = self._resolve_key(key)
         if not topic_id:
             logger.info(f'No storage "{key}" found.')
             return default or {}
@@ -94,7 +98,8 @@ class DiscourseStorage(BaseDiscourseStorage):
 
     def put(self, key, value):
         data = yaml.safe_dump(value)
-        if key not in self._storage_ids:
+        topic_id, post_id = self._resolve_key(key)
+        if not topic_id:
             logger.info(
                 f'No storage "{key}" found. Creating a new storage by sending a message to ourself'
             )
@@ -106,8 +111,4 @@ class DiscourseStorage(BaseDiscourseStorage):
             )
             self._storage_ids[key] = res.get("topic_id"), res.get("id")
         else:
-            topic_id, post_id = self._storage_ids[key]
-            if not post_id:
-                post_id = self.client.posts(topic_id)["post_stream"]["posts"][0]["id"]
-                self._storage_ids[key] = topic_id, post_id
             self.client.update_post(post_id, data)
