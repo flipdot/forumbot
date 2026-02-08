@@ -720,6 +720,23 @@ def _mail_voucher_returned(
         )
         return
     data = client.storage.get("voucher", {})
+
+    congress_id = get_congress_id()
+    if congress_id not in data.get("voucher_topics", {}):
+        logger.info(
+            f"No active voucher topic for {congress_id}, ignoring returned voucher."
+        )
+        return
+
+    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    if phase_range := data.get("voucher_phase_range", {}).get(congress_id):
+        end_date = phase_range.get("end")
+        if end_date and now > end_date:
+            logger.info(
+                f"Voucher phase for {congress_id} ended on {end_date}, ignoring returned voucher."
+            )
+            return
+
     try:
         voucher = data["voucher"][voucher_index]
     except IndexError:

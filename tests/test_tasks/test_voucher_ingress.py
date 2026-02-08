@@ -114,6 +114,7 @@ def test_process_email_new_voucherlist_invalid_format(dummy_storage_client, capl
 
 
 def test_process_email_voucher_returned_success(dummy_storage_client, mocker):
+    congress_id = get_congress_id()
     voucher_data = {
         "index": 0,
         "voucher": "CHAOSOLD",
@@ -127,7 +128,9 @@ def test_process_email_voucher_returned_success(dummy_storage_client, mocker):
             }
         ],
     }
-    dummy_storage_client.storage.put("voucher", {"voucher": [voucher_data]})
+    dummy_storage_client.storage.put(
+        "voucher", {"voucher": [voucher_data], "voucher_topics": {congress_id: 123}}
+    )
 
     # Mock create_post to avoid real API calls
     mocker.patch.object(dummy_storage_client, "create_post")
@@ -156,6 +159,7 @@ You can use it to buy a ticket for 39C3 here""",
 
 
 def test_process_email_voucher_returned_no_code(dummy_storage_client, caplog):
+    congress_id = get_congress_id()
     voucher_data = {
         "voucher": [
             {
@@ -171,7 +175,8 @@ def test_process_email_voucher_returned_no_code(dummy_storage_client, caplog):
                     }
                 ],
             }
-        ]
+        ],
+        "voucher_topics": {congress_id: 123},
     }
     dummy_storage_client.storage.put("voucher", voucher_data)
 
@@ -203,3 +208,95 @@ def test_process_email_voucher_returned_invalid_param(
     process_email_voucheringress(dummy_storage_client, invalid_param, msg)
 
     assert "Invalid mail_param in email" in caplog.text
+
+
+def test_process_email_voucher_returned_no_active_topic(dummy_storage_client, mocker):
+    voucher_data = {
+        "index": 0,
+        "voucher": "CHAOSOLD",
+        "owner": "user1",
+        "message_id": 999,
+        "history": [
+            {
+                "username": "user1",
+                "received_at": "2026-02-08T02:28:33.202692+01:00",
+                "persons": 1,
+            }
+        ],
+    }
+    # No voucher_topics set for current congress
+    dummy_storage_client.storage.put(
+        "voucher", {"voucher": [voucher_data], "voucher_topics": {}}
+    )
+
+    # Mock create_post to avoid real API calls
+    mocker.patch.object(dummy_storage_client, "create_post")
+
+    mail_param = encode_voucher_identifier(0, 1)
+    msg = create_email(
+        "You received a voucher",
+        "CHAOSRETURNED",
+    )
+
+    process_email_voucheringress(dummy_storage_client, mail_param, msg)
+
+    # Verify voucher was NOT updated because there is no active topic
+    data = dummy_storage_client.storage.get("voucher")
+    voucher = data["voucher"][0]
+    # The expected behavior is that the voucher remains unchanged
+    assert voucher["voucher"] == "CHAOSOLD"
+    assert voucher["owner"] == "user1"
+
+
+def test_process_email_voucher_returned_after_deadline(dummy_storage_client, mocker):
+    congress_id = get_congress_id()
+    voucher_data = {
+        "index": 0,
+        "voucher": "CHAOSOLD",
+        "owner": "user1",
+        "message_id": 999,
+        "history": [
+            {
+                "username": "user1",
+                "received_at": "2026-02-08T02:28:33.202692+01:00",
+                "persons": 1,
+            }
+        ],
+    }
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "voucher": [voucher_data],
+            "voucher_topics": {congress_id: 123},
+            "voucher_phase_range": {
+                congress_id: {
+                    "start": datetime(
+                        2025, 10, 1, tzinfo=pytz.timezone("Europe/Berlin")
+                    ),
+                    "end": datetime(
+                        2025, 12, 30, tzinfo=pytz.timezone("Europe/Berlin")
+                    ),
+                }
+            },
+        },
+    )
+
+    # Mock create_post
+    mocker.patch.object(dummy_storage_client, "create_post")
+
+    mail_param = encode_voucher_identifier(0, 1)
+    msg = create_email(
+        "You received a voucher",
+        "CHAOSRETURNED",
+    )
+
+    # We are in the future relative to the end date
+    with freezegun.freeze_time("2026-02-08T12:00:00Z"):
+        process_email_voucheringress(dummy_storage_client, mail_param, msg)
+
+    # Verify voucher was NOT updated because the phase has ended
+    data = dummy_storage_client.storage.get("voucher")
+    voucher = data["voucher"][0]
+    assert voucher["voucher"] == "CHAOSOLD"
+    assert voucher["owner"] == "user1"
