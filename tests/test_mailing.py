@@ -26,6 +26,11 @@ def mock_imap(mocker):
         ("bot@flipdot.org", None, None),
         ("someone@example.com", None, None),
         ("bot+unknown-task@flipdot.org", None, None),
+        (
+            '"Flipbot" <bot+voucheringress-displayname@flipdot.org>',
+            "mailing.process_email_voucheringress",
+            "displayname",
+        ),
     ],
 )
 def test_read_emails_dispatch(

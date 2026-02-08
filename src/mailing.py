@@ -59,7 +59,7 @@ def read_emails(discourse_client: DiscourseStorageClient, days_back: int = 90):
             msg = email.message_from_bytes(response_part[1])
             delivered_to = msg["Delivered-To"]
 
-            match m.groups() if (m := matcher.match(delivered_to)) else None:
+            match m.groups() if (m := matcher.search(delivered_to)) else None:
                 case None:
                     logger.info(f"Email not addressed to bot: {delivered_to}")
                     continue
