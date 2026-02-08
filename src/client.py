@@ -1,15 +1,25 @@
-import logging
 from typing import Dict
+from abc import ABC, abstractmethod
 
 from pydiscourse import DiscourseClient
 import yaml
 
+from logging import getLogger
+
+logger = getLogger(__name__)
+
+
+class DiscourseStorageError(Exception):
+    pass
+
 
 class DiscourseStorageClient(DiscourseClient):
-
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self, *args, storage_cls: type["BaseDiscourseStorage"] | None = None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
-        self.storage = DiscourseStorage(self)
+        storage_cls = storage_cls or DiscourseStorage
+        self.storage: BaseDiscourseStorage = storage_cls(self)
 
     # TODO: Add this method upstream
     def private_messages_sent(self, username=None, **kwargs):
@@ -25,18 +35,30 @@ class DiscourseStorageClient(DiscourseClient):
         return self._get(f"/t/{topic_id}.json", **kwargs)
 
 
-class DiscourseStorage:
+class BaseDiscourseStorage(ABC):
+    def __init__(self, client: "DiscourseStorageClient"):
+        self.client = client
+
+    @abstractmethod
+    def get(self, key, default=None) -> Dict: ...
+
+    @abstractmethod
+    def put(self, key, value): ...
+
+
+class DiscourseStorage(BaseDiscourseStorage):
     """
     Uses a PM to itself to persist data. This way, we won't need to care about storage.
     """
 
     def __init__(self, client: DiscourseStorageClient):
-        self.client = client
-        self._storage_ids = {}
+        super().__init__(client)
+        self._storage_ids: Dict[str, tuple[int | None, int | None]] = {}
         page = 0
         while True:
+            logger.info(f"Loading page {page} for initializing DiscourseStorage")
             messages = self.client.private_messages_sent(page=page)
-            topics = messages["topic_list"]["topics"]
+            topics = messages["topic_list"]["topics"] if messages else []
             if not topics:
                 break
             # Remove messages with participants
@@ -50,26 +72,30 @@ class DiscourseStorage:
                 key = topic["title"].replace("STORAGE_", "")
                 # first is topic id, second is post id. Be lazy and fetch the post id later
                 self._storage_ids[key] = topic["id"], None
+                logger.info(
+                    f'Topic id "{topic["id"]}" contains storage for key "{key}"'
+                )
             page += 1
 
     def get(self, key, default=None) -> Dict:
         topic_id, post_id = self._storage_ids.get(key, (None, None))
         if not topic_id:
-            logging.info(f'No storage "{key}" found.')
+            logger.info(f'No storage "{key}" found.')
             return default or {}
         if not post_id:
             post_id = self.client.posts(topic_id)["post_stream"]["posts"][0]["id"]
             self._storage_ids[key] = topic_id, post_id
         post = self.client.single_post(post_id)
-        assert post[
-            "yours"
-        ], f'The "STORAGE_{key}" was not created by ourself (post_id: {post_id})'
+        if post["yours"] is not True:
+            raise DiscourseStorageError(
+                f'The "STORAGE_{key}" was not created by ourself (post_id: {post_id})'
+            )
         return yaml.safe_load(post["raw"])
 
     def put(self, key, value):
         data = yaml.safe_dump(value)
         if key not in self._storage_ids:
-            logging.info(
+            logger.info(
                 f'No storage "{key}" found. Creating a new storage by sending a message to ourself'
             )
             res = self.client.create_post(

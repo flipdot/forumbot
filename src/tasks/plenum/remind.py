@@ -60,7 +60,7 @@ def main(client: DiscourseStorageClient) -> None:
 
     extracted_plenum_date = extract_plenum_date_from_topic(latest)
     if not extracted_plenum_date:
-        logging.warning(f'Failed to extract date from topic: {latest["title"]}')
+        logging.warning(f"Failed to extract date from topic: {latest['title']}")
         return
 
     if not is_day_before_plenum(extracted_plenum_date):

@@ -4,7 +4,6 @@ from tasks.plenum.post_protocol import parse_protocol
 
 
 class TestParseProtocol(unittest.TestCase):
-
     def setUp(self) -> None:
         pass
 

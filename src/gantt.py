@@ -13,8 +13,8 @@ def plot_gantt_chart(
     end_date = pd.to_datetime(end_date) + pd.Timedelta(days=1)
     data = []
     last_end = start_date
-    for i, voucher in enumerate(voucher):
-        history = voucher["history"]
+    for i, voucher_entry in enumerate(voucher):
+        history = voucher_entry["history"]
         for j, entry in enumerate(
             sorted(history, key=lambda x: datetime.fromisoformat(x["received_at"]))
         ):
@@ -61,6 +61,19 @@ def plot_gantt_chart(
                     "end": end_date,
                 }
             )
+
+    if not data:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.set_title("Voucherstats")
+        ax.text(
+            0.5,
+            0.5,
+            "Noch keine historischen Daten verfügbar",
+            va="center",
+            ha="center",
+            fontsize=16,
+        )
+        return fig
 
     # Convert data to DataFrame and process dates
     df = pd.DataFrame(data)
