@@ -36,6 +36,11 @@ def imap_date_format(dt: datetime) -> str:
 
 
 def read_emails(discourse_client: DiscourseStorageClient, days_back: int = 90):
+    if not (IMAP_USERNAME and IMAP_PASSWORD):
+        logger.error(
+            "Environment variables `IMAP_USERNAME` and / or `IMAP_PASSWORD` missing. Skipping email processing."
+        )
+        return
     mail = imaplib.IMAP4_SSL(IMAP_HOST)
     mail.login(IMAP_USERNAME, IMAP_PASSWORD)
     mail.select("inbox")
