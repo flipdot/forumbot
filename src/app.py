@@ -101,7 +101,6 @@ def schedule_jobs(client: DiscourseStorageClient) -> None:
     tasks.voucher.main(client)
     fetch_unread_messages(client)
     read_emails(client, days_back=30)
-    # read_emails(client, days_back=300)
 
 
 def main():

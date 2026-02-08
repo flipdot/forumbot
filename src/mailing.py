@@ -41,7 +41,6 @@ def read_emails(discourse_client: DiscourseStorageClient, days_back: int = 90):
     mail.select("inbox")
 
     today = datetime.now()
-    # since_date = (today - timedelta(days=30)).strftime("%d-%b-%Y")
     since_date = imap_date_format(today - timedelta(days=days_back))
 
     status, messages = mail.search(None, f"SINCE {since_date}")

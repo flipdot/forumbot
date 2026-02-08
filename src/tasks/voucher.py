@@ -584,10 +584,9 @@ def get_congress_id(now: datetime | None = None) -> str:
 
 def update_history_image(client: DiscourseStorageClient) -> None:
     now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
-    # TODO: comment back in before committing
-    # if now.month not in [10, 11, 12]:
-    #     logging.info("Not voucher season. Skipping.")
-    #     return
+    if now.month not in [10, 11, 12]:
+        logging.info("Not voucher season. Skipping.")
+        return
 
     data = client.storage.get("voucher", {})
 
@@ -824,10 +823,9 @@ def _mail_msg_to_str(
 def main(client: DiscourseStorageClient) -> None:
     # voucher only relevant in october, november and maybe december
     now = datetime.now()
-    # TODO: comment back in before committing
-    # if now.month not in [10, 11, 12]:
-    #     logging.info("Not voucher season. Skipping.")
-    #     return
+    if now.month not in [10, 11, 12]:
+        logging.info("Not voucher season. Skipping.")
+        return
 
     process_voucher_distribution(client)
 
