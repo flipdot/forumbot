@@ -1,6 +1,9 @@
+import base64
 import logging
 import re
+import struct
 from datetime import datetime, timedelta
+from email.message import Message
 from pathlib import Path
 import random
 
@@ -168,6 +171,7 @@ def handle_private_message_voucher_list(
     username = posts["post_stream"]["posts"][0]["username"]
     data["voucher"] = [
         {
+            "index": i,
             "voucher": v,
             "owner": None,
             "old_owner": username,
@@ -176,7 +180,7 @@ def handle_private_message_voucher_list(
             "received_at": datetime.now(),
             "history": [],
         }
-        for v in received_voucher
+        for i, v in enumerate(received_voucher)
     ]
 
     client.storage.put("voucher", data)
@@ -187,7 +191,7 @@ def handle_private_message_voucher_list(
     )
     post_content = render(
         "voucher_list_received.md",
-        reported_by=username,
+        reported_by=f"@{username}",
         total_voucher=len(received_voucher),
         bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
     )
@@ -353,11 +357,44 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> boo
         return True
 
 
+def decode_voucher_identifier(data: str) -> tuple[int, int]:
+    data = data.strip().upper()
+
+    if missing_padding := len(data) % 8:
+        data += "=" * (8 - missing_padding)
+
+    b32_decoded_data = base64.b32decode(data)
+    try:
+        return struct.unpack(">BB", b32_decoded_data)
+    except struct.error as e:
+        raise ValueError("Invalid voucher identifier format") from e
+
+
+def encode_voucher_identifier(index: int, history_length: int) -> str:
+    try:
+        return (
+            base64.b32encode(struct.pack(">BB", index, history_length))
+            .rstrip(b"=")
+            .decode()
+            .lower()
+        )
+    except struct.error as e:
+        raise ValueError("Index and history_length must be between 0 and 255") from e
+
+
 def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
     if voucher["message_id"]:
         raise ValueError("Voucher already sent")
     username = voucher["owner"]
-    message_content = render("voucher_message.md", voucher=voucher)
+    voucher_identifier = encode_voucher_identifier(
+        voucher["index"], len(voucher["history"]) + 1
+    )
+    voucher_ingress_email = f"bot+voucheringress-{voucher_identifier}@flipdot.org"
+    message_content = render(
+        "voucher_message.md",
+        voucher=voucher,
+        voucher_ingress_email=voucher_ingress_email,
+    )
     logging.info(f"Sending voucher to {username}")
     res = client.create_post(
         message_content,
@@ -594,6 +631,193 @@ def update_history_image(client: DiscourseStorageClient) -> None:
         logger.error(f"Unexpected response from Discourse: {res}")
 
     client.storage.put("voucher", data)
+
+
+def process_email_voucheringress(
+    client: DiscourseStorageClient, mail_param: str | None, msg: Message
+) -> None:
+    if not mail_param:
+        if not client.storage.get("voucher")["voucher"]:
+            _mail_new_voucherlist(client, msg)
+    else:
+        _mail_voucher_returned(client, mail_param, msg)
+    # subject, encoding = decode_header(msg["Subject"])[0]
+
+
+def _mail_new_voucherlist(client: DiscourseStorageClient, msg: Message) -> None:
+    """
+    The mail that is processed by this function is supposed to contain a list of vouchers.
+    We'll start a voucher distribution process with these vouchers.
+    """
+    content = _mail_msg_to_str(msg, accepted_content_types=("text/plain",))
+    # Get every line between BEGIN VOUCHER LIST and END VOUCHER LIST
+    voucher_match = re.search(
+        r"BEGIN VOUCHER LIST(.*?)END VOUCHER LIST", content, re.DOTALL
+    )
+    if not voucher_match:
+        logger.error(
+            "No voucher list found in email",
+            extra={
+                "mail_content": content,
+                "mail_to": msg.get("To"),
+                "mail_from": msg.get("From"),
+                "mail_subject": msg.get("Subject"),
+                "mail_date": msg.get("Date"),
+            },
+        )
+        return
+    voucher_lines = voucher_match.group(1)
+    voucher_codes = [line.strip() for line in voucher_lines.split()]
+    data = client.storage.get("voucher", {})
+    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    data["voucher"] = [
+        {
+            "index": i,
+            "voucher": v,
+            "owner": None,
+            "old_owner": constants.DISCOURSE_CREDENTIALS["api_username"],
+            "message_id": None,
+            "persons": None,
+            "received_at": now,
+            "history": [],
+        }
+        for i, v in enumerate(voucher_codes)
+    ]
+    client.storage.put("voucher", data)
+    logging.info(f"Stored {len(voucher_codes)} fresh vouchers from email")
+    post_content = render(
+        "voucher_list_received.md",
+        reported_by="Der CCC",
+        total_voucher=len(voucher_codes),
+        bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
+    )
+    client.create_post(
+        post_content,
+        topic_id=data["voucher_topics"][get_congress_id()],
+    )
+
+
+def _mail_voucher_returned(
+    client: DiscourseStorageClient, mail_param: str, msg: Message
+) -> None:
+    """
+    The mail that is processed by this function is supposed to contain a voucher code that was returned by a user.
+    We'll check if the voucher code is valid and if so, mark the voucher as returned and available
+    for distribution again.
+    """
+    try:
+        voucher_index, history_length = decode_voucher_identifier(mail_param)
+    except ValueError:
+        logger.error(
+            "Invalid mail_param in email",
+            extra={
+                "mail_param": mail_param,
+                "mail_to": msg.get("To"),
+                "mail_from": msg.get("From"),
+                "mail_subject": msg.get("Subject"),
+                "mail_date": msg.get("Date"),
+            },
+        )
+        return
+    data = client.storage.get("voucher", {})
+    try:
+        voucher = data["voucher"][voucher_index]
+    except IndexError:
+        logger.error(
+            "Invalid voucher index in email",
+            extra={
+                "mail_param": mail_param,
+                "voucher_index": voucher_index,
+                "mail_to": msg.get("To"),
+                "mail_from": msg.get("From"),
+                "mail_subject": msg.get("Subject"),
+                "mail_date": msg.get("Date"),
+            },
+        )
+        return
+    assert voucher["index"] == voucher_index, "List index and voucher index mismatch"
+    if len(voucher["history"]) != history_length:
+        logger.info(
+            "Mail was already processed, because history length mismatched",
+            extra={
+                "mail_param": mail_param,
+                "voucher_index": voucher_index,
+                "expected_history_length": history_length,
+                "actual_history_length": len(voucher["history"]),
+                "mail_to": msg.get("To"),
+                "mail_from": msg.get("From"),
+                "mail_subject": msg.get("Subject"),
+                "mail_date": msg.get("Date"),
+            },
+        )
+        return
+    if voucher["owner"] is None:
+        logging.info(
+            "Mail was already processed, because voucher is already available (owner is None)",
+        )
+        return
+
+    content = _mail_msg_to_str(msg, accepted_content_types=("text/plain",))
+    matches = re.search(r"CHAOS[a-zA-Z0-9]+", content)
+    if not matches:
+        logger.error(
+            "Couldn't find voucher code in email",
+            extra={
+                "mail_to": msg.get("To"),
+                "mail_from": msg.get("From"),
+                "mail_subject": msg.get("Subject"),
+                "mail_date": msg.get("Date"),
+            },
+        )
+        return
+    returned_voucher_code = matches.group(0)
+    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    send_message_to_user(
+        client,
+        voucher,
+        message="Vielen Dank, ich habe den replizierten Voucher erhalten!",
+    )
+
+    voucher["voucher"] = returned_voucher_code
+    voucher["old_owner"] = voucher["owner"]
+    voucher["owner"] = None
+    voucher["message_id"] = None
+    voucher["history"][-1]["returned_at"] = now.isoformat()
+    voucher["received_at"] = now
+    voucher["persons"] = None
+    client.storage.put("voucher", data)
+    logging.info(f"Voucher {returned_voucher_code} returned by email")
+
+
+def _mail_msg_to_str(
+    msg: Message, accepted_content_types=("text/plain", "text/html")
+) -> str:
+    """
+    Convert an email.message.Message to a string by extracting its payload.
+    Handles both plain text and multipart messages.
+    """
+    result = ""
+    if msg.is_multipart():
+        parts = []
+        for part in msg.walk():
+            content_type = part.get_content_type()
+            content_disposition = str(part.get("Content-Disposition"))
+
+            if (
+                content_type in accepted_content_types
+                and "attachment" not in content_disposition
+            ):
+                body = part.get_payload(decode=True)
+                if body:
+                    encoding = part.get_content_charset() or "utf-8"
+                    parts.append(body.decode(encoding, errors="replace"))
+        result = "\n".join(parts)
+    else:
+        body = msg.get_payload(decode=True)
+        if body:
+            encoding = msg.get_content_charset() or "utf-8"
+            result = body.decode(encoding, errors="replace")
+    return result
 
 
 def main(client: DiscourseStorageClient) -> None:

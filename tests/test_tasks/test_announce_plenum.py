@@ -5,7 +5,6 @@ from tasks import plenum
 
 
 class TestTopicExists(unittest.TestCase):
-
     def setUp(self) -> None:
         self.topics = [
             "Wie funktioniert ein Plenum?",
@@ -90,7 +89,6 @@ class TestTopicExists(unittest.TestCase):
 
 
 class TestAnnouncePlenum(unittest.TestCase):
-
     def test_get_next_plenum_date(self):
         plenum_date, delta = plenum.get_next_plenum_date(datetime(2019, 8, 1))
         self.assertEqual(datetime(2019, 8, 4), plenum_date)
