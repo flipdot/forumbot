@@ -656,7 +656,16 @@ def _mail_new_voucherlist(client: DiscourseStorageClient, msg: Message) -> None:
         r"BEGIN VOUCHER LIST(.*?)END VOUCHER LIST", content, re.DOTALL
     )
     if not voucher_match:
-        logger.error("No voucher list found in email", extra={"mail_content": content})
+        logger.error(
+            "No voucher list found in email",
+            extra={
+                "mail_content": content,
+                "mail_to": msg.get("To"),
+                "mail_from": msg.get("From"),
+                "mail_subject": msg.get("Subject"),
+                "mail_date": msg.get("Date"),
+            },
+        )
         return
     voucher_lines = voucher_match.group(1)
     voucher_codes = [line.strip() for line in voucher_lines.split()]

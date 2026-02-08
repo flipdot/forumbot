@@ -26,6 +26,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "freezegun>=1.5.5",
     "pre-commit>=4.0.1,<5",
     "pytest-mock>=3.15.1",
 ]

@@ -1,7 +1,8 @@
 import pytest
-
-
+from dotenv import load_dotenv
 from client import DiscourseStorageClient, BaseDiscourseStorage
+
+load_dotenv(".env.unittests", override=True)
 
 
 class DiscourseDummyStorage(BaseDiscourseStorage):
