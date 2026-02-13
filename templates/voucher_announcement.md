@@ -78,7 +78,6 @@ Wir haben {{ vouchers | length }} Voucher zur Verfügung! Hier sind sie:
 
 | Voucher | Aktuell bei | erhalten | Für n Personen |
 |---------|-------------|----------|----------------|
-
 {% for voucher in vouchers -%}
 | #{{ loop.index }} | @{{ voucher.owner or bot_name }} | {{ voucher.received_at.strftime("%Y-%m-%d %H:%M") }} | {{
 voucher.persons or '' }} |
