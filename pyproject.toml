@@ -40,4 +40,4 @@ build-backend = "hatchling.build"
 packages = ["src"]
 
 [tool.ruff]
-exclude = ["voucher_announcement.md"]
+exclude = ["*.md"]
