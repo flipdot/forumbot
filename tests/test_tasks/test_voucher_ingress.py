@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from email import message_from_string
+from email.message import Message
 
 import freezegun
 import pytest
@@ -12,7 +13,7 @@ from tasks.voucher import (
 )
 
 
-def create_email(subject, content):
+def create_email(subject, content) -> Message:
     msg_str = f"""To: voucher@flipdot.org
 From: tickets@cccv.de
 Subject: {subject}
@@ -72,7 +73,6 @@ END VOUCHER LIST""",
             "old_owner": "testbot_username",
             "received_at": expected_now,
             "message_id": None,
-            "persons": None,
         },
         {
             "index": 1,
@@ -82,7 +82,6 @@ END VOUCHER LIST""",
             "old_owner": "testbot_username",
             "received_at": expected_now,
             "message_id": None,
-            "persons": None,
         },
     ]
 

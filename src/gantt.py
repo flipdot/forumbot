@@ -29,15 +29,11 @@ def plot_gantt_chart(
                     end_date,
                 )
 
-            if entry["persons"] > 1:
-                extra_persons = f" + {entry['persons'] - 1}"
-            else:
-                extra_persons = ""
             data.append(
                 {
                     "voucher_id": f"#{i + 1}",
                     "username": entry["username"],
-                    "text": f"{entry['username']}{extra_persons}",
+                    "text": entry["username"],
                     "start": start,
                     "end": end,
                 }
