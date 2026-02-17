@@ -44,20 +44,19 @@ def handle_private_message_bedarf(
     else:
         persons = int(persons[0])
 
-    data = client.storage.get("voucher")
-    queue = data.get("queue", [])
+    data = client.storage.get("voucher", {"voucher": [], "queue": [], "demand": {}})
+    demand = data.setdefault("demand", {})
     name = posts["post_stream"]["posts"][-1]["username"]
 
     if persons == 0:
-        for entry in queue:
-            if entry["name"] == name:
-                queue.remove(entry)
-                client.storage.put("voucher", data)
-                client.create_post(
-                    "0 Voucher also? Okay, ich habe dich aus der Warteschlange entfernt.",
-                    topic_id=topic["id"],
-                )
-                break
+        if name in demand:
+            del demand[name]
+            data["queue"] = [u for u in data.get("queue", []) if u != name]
+            client.storage.put("voucher", data)
+            client.create_post(
+                "0 Voucher also? Okay, ich habe dich aus der Warteschlange entfernt.",
+                topic_id=topic["id"],
+            )
         else:
             client.create_post(
                 'Ich habe "0 Voucher" verstanden und wollte dich aus der Warteschlange entfernen, '
@@ -70,18 +69,7 @@ def handle_private_message_bedarf(
             )
         return
 
-    # Search for the user in the queue, update the number of persons
-    for entry in queue:
-        if entry["name"] == name:
-            entry["persons"] = persons
-            break
-    else:
-        queue.append(
-            {
-                "name": name,
-                "persons": persons,
-            }
-        )
+    demand[name] = persons
     client.storage.put("voucher", data)
     # send a confirmation to the user
     client.create_post(
@@ -118,9 +106,6 @@ def handle_private_message_gesamtbedarf(
         )
         return
     data["total_persons_reported"] = persons
-
-    # shuffle queue for fairness
-    random.shuffle(data.get("queue", []))
 
     client.storage.put("voucher", data)
     client.create_post(
@@ -421,7 +406,6 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
         {
             "username": voucher["owner"],
             "received_at": now.isoformat(),
-            "persons": voucher["persons"],
         }
     )
 
@@ -472,6 +456,7 @@ def create_voucher_topic(
 
     data["voucher"] = []
     data["queue"] = []
+    data["demand"] = {}
     data["total_persons_reported"] = None
     if "voucher_topics" not in data:
         data["voucher_topics"] = {}
@@ -491,16 +476,15 @@ def update_voucher_topic(client: DiscourseClient, data: dict, post_id: int) -> N
 def render_post_content(data: dict) -> str:
     vouchers = data.get("voucher", [])
     queue = data.get("queue", [])
+    demand = data.get("demand", {})
     total_persons_reported = data.get("total_persons_reported")
 
-    # now = datetime.now()
-    for v in vouchers:
-        if not v["received_at"]:
-            continue
-        # delta = v["received_at"] - now
-        # v["received_delta"] = babel.dates.format_timedelta(
-        #     delta, locale="de_DE", add_direction=True
-        # )
+    # Create alphabetically sorted demand list
+    demand_list = [
+        {"name": name, "count": count}
+        for name, count in sorted(demand.items(), key=lambda item: item[0])
+        if count > 0
+    ]
 
     image_url = (
         data.get("voucher_history_image", {})
@@ -517,11 +501,13 @@ def render_post_content(data: dict) -> str:
         voucher_phase_end = format_date(ts, format="long", locale="de_DE")
     else:
         voucher_phase_end = None
+
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
         queue=queue,
-        total_persons_in_queue=sum([entry["persons"] for entry in queue]),
+        demand_list=demand_list,
+        total_persons_in_queue=(sum(demand.values()) + len(queue)),
         total_persons_reported=total_persons_reported,
         bot_name=constants.DISCOURSE_CREDENTIALS["api_username"],
         image_url=image_url,
@@ -532,7 +518,7 @@ def render_post_content(data: dict) -> str:
 
 
 def process_voucher_distribution(client: DiscourseStorageClient):
-    data = client.storage.get("voucher", {"voucher": [], "queue": []})
+    data = client.storage.get("voucher", {"voucher": [], "queue": [], "demand": {}})
     for voucher in data.get("voucher", []):
         if voucher.get("message_id"):
             # The voucher is already assigned to someone. Check if they returned it
@@ -552,17 +538,26 @@ def process_voucher_distribution(client: DiscourseStorageClient):
                 voucher["message_id"] = None
                 voucher["history"][-1]["returned_at"] = now.isoformat()
                 voucher["received_at"] = now
-                voucher["persons"] = None
 
         if not voucher["owner"]:
             # The voucher is available. Assign it to the next person in the queue
-            queue = data.get("queue")
-            if not queue or type(queue) is not list:
-                continue
-            next_item = queue.pop(0)
-            voucher["owner"] = next_item["name"]
-            voucher["persons"] = next_item["persons"]
-            voucher["retry_counter"] = 0
+            if not data.get("queue"):
+                # If the queue is empty, we will extend it, by putting each person who has n > 0
+                # in the demand dictionary once into the list (in random order)
+                demand = data.setdefault("demand", {})
+                potential_recipients = [
+                    name for name, count in demand.items() if count > 0
+                ]
+                if potential_recipients:
+                    random.shuffle(potential_recipients)
+                    data["queue"] = potential_recipients
+                    for name in potential_recipients:
+                        demand[name] -= 1
+
+            if data.get("queue"):
+                next_user = data["queue"].pop(0)
+                voucher["owner"] = next_user
+                voucher["retry_counter"] = 0
 
         if not voucher.get("message_id") and voucher["owner"]:
             # Voucher was assigned to someone but they haven't received it yet
@@ -687,7 +682,6 @@ def _mail_new_voucherlist(client: DiscourseStorageClient, msg: Message) -> None:
             "owner": None,
             "old_owner": constants.DISCOURSE_CREDENTIALS["api_username"],
             "message_id": None,
-            "persons": None,
             "received_at": now,
             "history": [],
         }
@@ -812,7 +806,6 @@ def _mail_voucher_returned(
     voucher["message_id"] = None
     voucher["history"][-1]["returned_at"] = now.isoformat()
     voucher["received_at"] = now
-    voucher["persons"] = None
     client.storage.put("voucher", data)
     logging.info(f"Voucher {returned_voucher_code} returned by email")
 

@@ -28,8 +28,9 @@ Ich helfe euch, effiziente Ketten zu bilden. Dazu muss ich wissen, wer von euch 
 - Ich setze dich auf die Interessentenliste und informiere dich, sobald ein Voucher für dich verfügbar ist
 
 [details="Für Organisatoren: Bedarfsermittlung"]
+
 - Wenn der Bedarf von flipdot feststeht, übermittle die Anzahl an die CCC Organisatoren
-  - Bitte finde selber raus, wie das dieses Jahr funktioniert. Wahrscheinlich hat flipdot eine Mail mit Informationen bekommen
+    - Bitte finde selber raus, wie das dieses Jahr funktioniert. Wahrscheinlich hat flipdot eine Mail mit Informationen bekommen
 - Sobald du es erfolgreich getan hast, schicke mir eine PN mit dem Text **VOUCHER-GESAMT-BEDARF-GEMELDET: X**, wobei das X für die *Gesamtzahl* Personen steht, die du gemeldet hast
 [/details]
 
@@ -41,21 +42,18 @@ Wir haben an die CCC Organisatoren gemeldet, dass unser **Bedarf bei {{ total_pe
 
 Jetzt warten wir darauf, dass wir Voucher erhalten.
 
-## Warteliste ({{ total_persons_in_queue }})
-
-Die Bedarfsliste wurde **zufällig gemischt**, und daraus diese **Warteliste** erstellt.
-Wenn du dich zur Bedarfsbestimmung nicht gemeldet hast, kannst du dich noch immer **ans Ende** der Liste setzen lassen.
-
 {% endif %}
 
-{% for item in queue %}
-  - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
-{%- endfor %}
-  - *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
+### Bedarfsliste {{ total_persons_in_queue }}
 
+{% for item in demand_list %}
+- @{{ item.name }}: Insgesamt {{ item.count }} Voucher
+{%- endfor %}
+- *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
 
 [details="Ich habe eine Liste mit allen Vouchern"]
-Ich, der Bot, übernehme die Verteilung! **Schick @{{ bot_name }} eine PN** mit dem Titel **VOUCHER-LISTE**.
+Eigentlich müsste ich die schon automatisch verarbeitet haben. Falls nicht, sollte dieser Fallback funktionieren:
+**Schick @{{ bot_name }} eine PN** mit dem Titel **VOUCHER-LISTE**.
 Pack alle Voucher die du hast in eine einzige Nachricht!
 Wenn ich deine Nachricht verstehen konnte, schreibe ich dir zurück und aktualisiere diesen Post.
 [/details]
@@ -64,7 +62,7 @@ Wenn ich deine Nachricht verstehen konnte, schreibe ich dir zurück und aktualis
 Wir haben {{ vouchers | length }} Voucher zur Verfügung! Hier sind sie:
 
 | Voucher | Aktuell bei | erhalten | Für n Personen |
-| ------- | ----------- |----------| -------------- |
+|---------|-------------|----------|----------------|
 {% for voucher in vouchers -%}
 | #{{ loop.index }} | @{{ voucher.owner or bot_name }} | {{ voucher.received_at.strftime("%Y-%m-%d %H:%M") }} | {{ voucher.persons or '' }} |
 {% endfor %}
@@ -78,23 +76,31 @@ Das Kontingent ist aufgebraucht? Schreibe mir eine PN mit dem Text `VOUCHER-EXHA
 {% endif %}
 {% elif not voucher_phase_start or not voucher_phase_end %}
 **Hinweis:** Bitte schreibe mir eine PN mit dem Text
+
 ```
 VOUCHER-PHASE: YYYY-MM-DD bis YYYY-MM-DD
 ```
+
 Dann poste ich hier eine hübsche Grafik.
 {% endif %}
 
 ## Warteliste
 
-Die Bedarfsliste wurde **zufällig gemischt**, und daraus diese **Warteliste** erstellt.
-Wenn du dich zur Bedarfsbestimmung nicht gemeldet hast, kannst du dich noch immer **ans Ende** der Liste setzen lassen.
+### Aktuelle Warteschlange (wer als nächstes dran ist)
 
-Folgende Leute warten darauf, dass eine Person aus der obigen Tabelle einen Voucher weitergibt
-{% for item in queue %}
-  - @{{ item.name }}{% if item.persons > 1 %} + {{ item.persons - 1 }}{% endif %}
+{% for name in queue %}
+- @{{ name }}
+{% else %}
+- Leer
 {%- endfor %}
-  - *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
-{% endif %}
+
+### Bedarfsliste (alphabetisch sortiert)
+
+{% for item in demand_list %}
+- @{{ item.name }}: noch {{ item.count }} Voucher
+{%- endfor %}
+- *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
+  {% endif %}
 
 # Was zu tun ist
 
