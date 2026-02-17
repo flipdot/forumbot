@@ -52,7 +52,8 @@ Jetzt warten wir darauf, dass wir Voucher erhalten.
 - *Füge dich hier ein, indem du @{{ bot_name }} eine PN mit **VOUCHER-BEDARF: 1** schickst.*
 
 [details="Ich habe eine Liste mit allen Vouchern"]
-Ich, der Bot, übernehme die Verteilung! **Schick @{{ bot_name }} eine PN** mit dem Titel **VOUCHER-LISTE**.
+Eigentlich müsste ich die schon automatisch verarbeitet haben. Falls nicht, sollte dieser Fallback funktionieren:
+**Schick @{{ bot_name }} eine PN** mit dem Titel **VOUCHER-LISTE**.
 Pack alle Voucher die du hast in eine einzige Nachricht!
 Wenn ich deine Nachricht verstehen konnte, schreibe ich dir zurück und aktualisiere diesen Post.
 [/details]
