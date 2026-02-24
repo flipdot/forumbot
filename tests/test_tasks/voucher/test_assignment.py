@@ -6,7 +6,7 @@ import pytz
 from tasks.voucher import process_voucher_distribution
 
 
-def test_task_sends_voucher_message(mocker, dummy_storage_client):
+def test_voucher_message_is_sent(mocker, dummy_storage_client):
     mocker.patch.object(
         dummy_storage_client, "create_post", return_value={"topic_id": 123}
     )
