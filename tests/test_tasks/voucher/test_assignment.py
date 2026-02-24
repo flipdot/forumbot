@@ -1,5 +1,4 @@
 import freezegun
-import pytest
 from datetime import datetime
 
 import pytz
@@ -7,13 +6,11 @@ import pytz
 from tasks.voucher import process_voucher_distribution
 
 
-@pytest.fixture
-def mock_client(dummy_storage_client, mocker):
+def test_task_sends_voucher_message(mocker, dummy_storage_client):
     mocker.patch.object(
         dummy_storage_client, "create_post", return_value={"topic_id": 123}
     )
 
-    # Mock storage
     dummy_storage_client.storage.put(
         "voucher",
         {
@@ -31,17 +28,14 @@ def mock_client(dummy_storage_client, mocker):
             "voucher_topics": {"40C3": 999},
         },
     )
-    return dummy_storage_client
 
-
-def test_task_sends_voucher_message(mock_client):
     with freezegun.freeze_time("2026-10-15T12:00:00Z"):
-        process_voucher_distribution(mock_client)
+        process_voucher_distribution(dummy_storage_client)
         expected_received_at = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
 
     # Check if create_post was called to send the PM
-    assert len(mock_client.create_post.call_args_list) == 1
-    pm_call = mock_client.create_post.call_args_list[0]
+    assert len(dummy_storage_client.create_post.call_args_list) == 1
+    pm_call = dummy_storage_client.create_post.call_args_list[0]
 
     assert pm_call.kwargs["archetype"] == "private_message"
     assert pm_call.kwargs["target_recipients"] == "alice"
@@ -53,7 +47,7 @@ def test_task_sends_voucher_message(mock_client):
     assert "https://tickets.events.ccc.de" in content
 
     # Check if storage was updated
-    assert mock_client.storage.get("voucher") == {
+    assert dummy_storage_client.storage.get("voucher") == {
         "demand": {"alice": 0},
         "queue": [],
         "voucher": [
