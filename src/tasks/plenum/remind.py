@@ -3,6 +3,7 @@ import logging
 from client import DiscourseStorageClient
 
 from datetime import timedelta, datetime
+import pytz
 from typing import List, Optional, Dict
 import re
 from dateutil.parser import parse
@@ -43,7 +44,9 @@ def latest_topic(topics: List[dict]) -> Optional[dict]:
 def is_day_before_plenum(date: datetime) -> bool:
     day_before_plenum = date - timedelta(1)
 
-    return datetime.now().date() == day_before_plenum.date()
+    return (
+        datetime.now(pytz.timezone("Europe/Berlin")).date() == day_before_plenum.date()
+    )
 
 
 PLENUM_NOTIFICATION_GROUP_NAME = "notify_plena"

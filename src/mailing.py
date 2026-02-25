@@ -4,6 +4,7 @@ import email
 import re
 import logging
 from datetime import datetime, timedelta
+import pytz
 
 from constants import IMAP_HOST, IMAP_USERNAME, IMAP_PASSWORD
 from tasks.voucher import process_email_voucheringress
@@ -45,7 +46,7 @@ def read_emails(discourse_client: DiscourseStorageClient, days_back: int = 90):
     mail.login(IMAP_USERNAME, IMAP_PASSWORD)
     mail.select("inbox")
 
-    today = datetime.now()
+    today = datetime.now(pytz.timezone("Europe/Berlin"))
     since_date = imap_date_format(today - timedelta(days=days_back))
 
     status, messages = mail.search(None, f"SINCE {since_date}")

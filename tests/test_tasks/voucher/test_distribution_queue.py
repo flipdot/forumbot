@@ -4,7 +4,6 @@ from tasks.voucher import (
     process_voucher_distribution,
     render_post_content,
 )
-import constants
 
 
 def test_voucher_demand_and_queue_generation(dummy_storage_client, mocker):
@@ -85,18 +84,12 @@ def test_voucher_demand_and_queue_generation(dummy_storage_client, mocker):
 
 
 def test_render_post_content_logic(mocker):
-    # Mock format_date to avoid locale issues in tests
-    mocker.patch("tasks.voucher.format_date", return_value="some date")
-
     data = {
         "demand": {"alice": 2, "bob": 1, "charlie": 0},
         "queue": ["dan"],
         "voucher": [],
         "total_persons_reported": 5,
     }
-
-    # We need to mock constants for DISCOURSE_CREDENTIALS
-    mocker.patch.dict(constants.DISCOURSE_CREDENTIALS, {"api_username": "bot"})
 
     # Mock render to see what's passed
     mock_render = mocker.patch("tasks.voucher.render")

@@ -39,7 +39,7 @@ def plot_gantt_chart(
                 }
             )
             last_end = end
-        if end_date > datetime.now().astimezone(pytz.timezone("Europe/Berlin")):
+        if end_date > datetime.now(pytz.timezone("Europe/Berlin")):
             days_left = (end_date - last_end).days
 
             if days_left <= 0:

@@ -162,7 +162,7 @@ def handle_private_message_voucher_list(
             "old_owner": username,
             "message_id": None,
             "persons": None,
-            "received_at": datetime.now(),
+            "received_at": datetime.now(pytz.timezone("Europe/Berlin")),
             "history": [],
         }
         for i, v in enumerate(received_voucher)
@@ -400,7 +400,7 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
     message_id = res.get("topic_id")
     logging.info(f"Sent, message_id is {message_id}")
     voucher["message_id"] = message_id
-    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     voucher["received_at"] = now
     voucher["history"].append(
         {
@@ -531,7 +531,7 @@ def process_voucher_distribution(client: DiscourseStorageClient):
                     message=f'Prima, vielen Dank für "{new_voucher_code}"!',
                 )
 
-                now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+                now = datetime.now(pytz.timezone("Europe/Berlin"))
                 voucher["voucher"] = new_voucher_code
                 voucher["old_owner"] = voucher["owner"]
                 voucher["owner"] = None
@@ -582,13 +582,13 @@ def get_congress_id(now: datetime | None = None) -> str:
     # assuming the number increases by one each year and
     # that we don't get another pandemic
     if not now:
-        now = datetime.now()
+        now = datetime.now(pytz.timezone("Europe/Berlin"))
     congress_number = now.year - 1986
     return f"{congress_number}C3"
 
 
 def update_history_image(client: DiscourseStorageClient) -> None:
-    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     if now.month not in [10, 11, 12] and not constants.FORCE_VOUCHER_PHASE:
         logging.info("Not voucher season. Skipping.")
         return
@@ -674,7 +674,7 @@ def _mail_new_voucherlist(client: DiscourseStorageClient, msg: Message) -> None:
     voucher_lines = voucher_match.group(1)
     voucher_codes = [line.strip() for line in voucher_lines.split()]
     data = client.storage.get("voucher", {})
-    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     data["voucher"] = [
         {
             "index": i,
@@ -733,7 +733,7 @@ def _mail_voucher_returned(
         )
         return
 
-    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     if phase_range := data.get("voucher_phase_range", {}).get(congress_id):
         end_date = phase_range.get("end")
         if end_date and now > end_date:
@@ -793,7 +793,7 @@ def _mail_voucher_returned(
         )
         return
     returned_voucher_code = matches.group(0)
-    now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     send_message_to_user(
         client,
         voucher,
@@ -843,7 +843,7 @@ def _mail_msg_to_str(
 
 def main(client: DiscourseStorageClient) -> None:
     # voucher only relevant in october, november and maybe december
-    now = datetime.now()
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     if now.month not in [10, 11, 12] and not constants.FORCE_VOUCHER_PHASE:
         logging.info("Not voucher season. Skipping.")
         return
