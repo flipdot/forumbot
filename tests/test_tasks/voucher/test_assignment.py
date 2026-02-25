@@ -29,7 +29,7 @@ def test_voucher_message_is_sent(mocker, dummy_storage_client):
         },
     )
 
-    with freezegun.freeze_time("2026-10-15T12:00:00Z"):
+    with freezegun.freeze_time("2026-10-15T12:00:00+00:00"):
         process_voucher_distribution(dummy_storage_client)
         expected_received_at = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
 
