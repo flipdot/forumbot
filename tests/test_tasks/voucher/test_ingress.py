@@ -59,7 +59,7 @@ END VOUCHER LIST""",
     )
 
     with freezegun.freeze_time("2026-02-08T12:00:00Z"):
-        expected_now = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+        expected_now = datetime.now(pytz.timezone("Europe/Berlin"))
         process_email_voucheringress(dummy_storage_client, None, msg)
 
     # Verify vouchers stored

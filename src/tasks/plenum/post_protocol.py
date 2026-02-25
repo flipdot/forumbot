@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime
+import pytz
 
 import requests
 import mistune
@@ -55,7 +56,7 @@ def parse_protocol(protocol):
 
 
 def main(client: DiscourseStorageClient) -> None:
-    now = datetime.now()
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     plenum_date, delta = get_next_plenum_date(now)
     if now.date() != plenum_date.date():
         logging.info("Today was no plenum. Aborting.")

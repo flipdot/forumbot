@@ -11,11 +11,12 @@ from tasks.plenum import (
 )
 from utils import render
 from datetime import datetime
+import pytz
 import requests
 
 
 def main(client: DiscourseStorageClient) -> None:
-    now = datetime.now()
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
     plenum_date, delta = get_next_plenum_date(now)
     if delta.days > 27:
         logging.info(

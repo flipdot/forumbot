@@ -103,9 +103,7 @@ def test_handle_returned_voucher(dummy_storage_client, mocker):
 
     with freeze_time("2024-01-01 10:00:00+01:00"):
         process_voucher_distribution(dummy_storage_client)
-        expected_returned_at_dt = datetime.now().astimezone(
-            pytz.timezone("Europe/Berlin")
-        )
+        expected_returned_at_dt = datetime.now(pytz.timezone("Europe/Berlin"))
 
     # Assert storage was updated
     updated_voucher_data = dummy_storage_client.storage.get("voucher")

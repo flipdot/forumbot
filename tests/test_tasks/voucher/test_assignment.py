@@ -31,7 +31,7 @@ def test_voucher_message_is_sent(mocker, dummy_storage_client):
 
     with freezegun.freeze_time("2026-10-15T12:00:00+00:00"):
         process_voucher_distribution(dummy_storage_client)
-        expected_received_at = datetime.now().astimezone(pytz.timezone("Europe/Berlin"))
+        expected_received_at = datetime.now(pytz.timezone("Europe/Berlin"))
 
     # Check if create_post was called to send the PM
     assert len(dummy_storage_client.create_post.call_args_list) == 1
@@ -58,7 +58,7 @@ def test_voucher_message_is_sent(mocker, dummy_storage_client):
                 "received_at": expected_received_at,
                 "message_id": 123,
                 "history": [
-                    {"username": "alice", "received_at": "2026-10-15T12:00:00+02:00"}
+                    {"username": "alice", "received_at": "2026-10-15T14:00:00+02:00"}
                 ],
                 "retry_counter": 0,
             }
