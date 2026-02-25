@@ -31,6 +31,7 @@ def test_update_voucher_topic_with_demand():
     post_content = render_post_content(storage)
     assert "Bedarfsermittlung" in post_content
     assert "Interessenten" in post_content
+    assert "Schreib mir eine PN" in post_content
     assert "- @user_a: Insgesamt 2 Voucher" in post_content
     assert "- @user_b: Insgesamt 3 Voucher" in post_content
     assert "- @user_c: Insgesamt 1 Voucher" in post_content
@@ -86,19 +87,3 @@ def test_update_voucher_topic_with_possessors():
     post_content = render_post_content(storage)
     assert "#1 | @user_a " in post_content
     assert "#2 | @user_b " in post_content
-
-
-def test_update_voucher_topic_no_distribution_yet():
-    """
-    Given: No vouchers have been distributed yet
-    When: The voucher topic is updated
-    Then: The post has a description for "Bedarfsermittlung"
-    """
-    storage = {
-        "demand": {
-            "user_a": 1,
-        }
-    }
-    post_content = render_post_content(storage)
-    assert "Bedarfsermittlung" in post_content
-    assert "Schreib mir eine PN" in post_content
