@@ -645,24 +645,30 @@ def process_voucher_distribution(client: DiscourseStorageClient):
                     needs_new_offer = True
 
             if needs_new_offer:
-                # Populate queue from demand if empty
-                if not data.get("queue"):
+                next_recipient = None
+                # Try to find a recipient in the existing queue; if none found, replenish from demand and try once more.
+                for _ in range(2):
+                    for user in data.get("queue", []):
+                        if user not in all_offered_users:
+                            next_recipient = user
+                            break
+
+                    if next_recipient:
+                        break
+
+                    # No recipient found in current queue, replenish from demand
                     demand = data.setdefault("demand", {})
                     potential_recipients = [
                         name for name, count in demand.items() if count > 0
                     ]
-                    if potential_recipients:
-                        random.shuffle(potential_recipients)
-                        data["queue"] = potential_recipients
-                        for name in potential_recipients:
-                            demand[name] -= 1
+                    if not potential_recipients:
+                        break  # No more demand to replenish from
 
-                # Find someone in the queue who doesn't have an active offer or a voucher already
-                next_recipient = None
-                for user in data.get("queue", []):
-                    if user not in all_offered_users:
-                        next_recipient = user
-                        break
+                    random.shuffle(potential_recipients)
+                    data.setdefault("queue", []).extend(potential_recipients)
+                    for name in potential_recipients:
+                        demand[name] -= 1
+                    # Continue to second iteration to find recipient in the replenished queue
 
                 if next_recipient:
                     send_offer_to_user(client, voucher, next_recipient)
