@@ -486,3 +486,75 @@ def test_offer_to_existing_owner(mocker, dummy_storage_client, responses):
             "message_id": 789,
         }
     ]
+
+
+def test_complex_demand_and_queue_replenishment(mocker, dummy_storage_client):
+    mocker.patch.object(
+        dummy_storage_client, "create_post", return_value={"topic_id": 111}
+    )
+    # Mock shuffle to be deterministic (sorted)
+    mocker.patch("random.shuffle", side_effect=lambda x: x.sort() or x)
+
+    now = datetime(2026, 10, 15, 12, 0, 0, tzinfo=pytz.timezone("Europe/Berlin"))
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {"alice": 2, "bob": 2, "dan": 3},
+            "queue": ["alice", "bob"],
+            "voucher": [
+                {
+                    "index": 0,
+                    "voucher": "V0",
+                    "owner": None,
+                    "offered_to": [
+                        {
+                            "username": "alice",
+                            "offered_at": now.isoformat(),
+                            "message_id": 100,
+                        }
+                    ],
+                    "message_id": None,
+                    "history": [],
+                },
+                {
+                    "index": 1,
+                    "voucher": "V1",
+                    "owner": None,
+                    "offered_to": [
+                        {
+                            "username": "bob",
+                            "offered_at": now.isoformat(),
+                            "message_id": 101,
+                        }
+                    ],
+                    "message_id": None,
+                    "history": [],
+                },
+                {
+                    "index": 2,
+                    "voucher": "V2",
+                    "owner": None,
+                    "offered_to": [],
+                    "message_id": None,
+                    "history": [],
+                },
+            ],
+            "voucher_topics": {"40C3": 999},
+        },
+    )
+
+    with freezegun.freeze_time("2026-10-15T12:05:00+00:00"):
+        process_voucher_distribution(dummy_storage_client)
+
+    final_storage = dummy_storage_client.storage.get("voucher")
+
+    # Dan should get the third voucher offered
+    assert final_storage["voucher"][2]["offered_to"][-1]["username"] == "dan"
+
+    # Alice, bob and dan should have been appended to the queue
+    # so alice and bob are mentioned now two times
+    assert final_storage["queue"] == ["alice", "bob", "alice", "bob", "dan"]
+
+    # Demand should be decreased
+    assert final_storage["demand"] == {"alice": 1, "bob": 1, "dan": 2}
