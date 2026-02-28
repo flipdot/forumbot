@@ -61,10 +61,10 @@ Wenn ich deine Nachricht verstehen konnte, schreibe ich dir zurück und aktualis
 {% else %}
 Wir haben {{ vouchers | length }} Voucher zur Verfügung! Hier sind sie:
 
-| Voucher | Aktuell bei | erhalten | Für n Personen |
-|---------|-------------|----------|----------------|
+| Voucher | Aktuell bei | erhalten |
+|---------|-------------|----------|
 {% for voucher in vouchers -%}
-| #{{ loop.index }} | {% if voucher.owner %}@{{ voucher.owner }}{% elif voucher.offered_to %}Wartet auf @{{ voucher.offered_to[-1].username }}{% else %}@{{ bot_name }}{% endif %} | {{ voucher.received_at.strftime("%Y-%m-%d %H:%M") if voucher.received_at else '' }} | {{ voucher.persons or '' }} |
+| #{{ loop.index }} | {% if voucher.owner %}@{{ voucher.owner }} | {{ voucher.received_at.strftime("%Y-%m-%d %H:%M") if voucher.received_at else '' }}{% elif voucher.offered_to %}Angebot an nächsten Nutzer ist raus{% else %}@{{ bot_name }}{% endif %} |
 {% endfor %}
 
 Du bist oben in der Liste? Dann hast du eine PN von mir bekommen! **Bitte kaufe schnellstmöglich deine Tickets!** https://tickets.events.ccc.de/

@@ -332,6 +332,7 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> boo
                     topic_id=offer["message_id"],
                 )
 
+        voucher_to_award["offered_to"] = []
         client.storage.put("voucher", data)
         return True
 

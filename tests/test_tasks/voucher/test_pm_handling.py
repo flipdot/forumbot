@@ -172,3 +172,38 @@ def test_only_first_queue_entry_removed_on_acceptance(dummy_storage_client, mock
     assert updated_data["queue"] == ["bob", "alice", "charlie"]
     # And she should own the voucher
     assert updated_data["voucher"][0]["owner"] == "alice"
+
+
+def test_offered_to_cleared_on_acceptance(dummy_storage_client, mocker):
+    mocker.patch("tasks.voucher.send_voucher_to_user")
+    mocker.patch("tasks.voucher.update_history_image")
+    dummy_storage_client.create_post = mocker.Mock()
+
+    data = {
+        "voucher": [
+            {
+                "voucher": "V1",
+                "offered_to": [
+                    {"username": "alice", "message_id": 123},
+                    {"username": "bob", "message_id": 456},
+                ],
+            }
+        ],
+        "queue": ["alice", "bob"],
+    }
+    dummy_storage_client.storage.put("voucher", data)
+
+    topic = {"id": 123}
+    posts = {
+        "post_stream": {
+            "posts": [{"username": "alice", "cooked": "VOUCHER_JETZT_EINLOESEN"}]
+        }
+    }
+
+    res = private_message_handler(dummy_storage_client, topic, posts)
+
+    assert res is True
+    updated_data = dummy_storage_client.storage.get("voucher")
+    # offered_to should be cleared
+    assert updated_data["voucher"][0]["offered_to"] == []
+    assert updated_data["voucher"][0]["owner"] == "alice"
