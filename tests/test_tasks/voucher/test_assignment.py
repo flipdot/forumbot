@@ -337,3 +337,64 @@ def test_voucher_acceptance_only_if_offered(mocker, dummy_storage_client):
     assert final_storage["voucher"][0]["owner"] is None
     assert final_storage["queue"] == ["alice", "bob"]
     assert len(dummy_storage_client.create_post.call_args_list) == 0
+
+
+def test_skip_user_with_pending_offer(mocker, dummy_storage_client):
+    mocker.patch.object(
+        dummy_storage_client, "create_post", return_value={"topic_id": 789}
+    )
+
+    now = datetime(2026, 10, 15, 12, 0, 0, tzinfo=pytz.timezone("Europe/Berlin"))
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {},
+            "queue": ["alice", "bob"],
+            "voucher": [
+                {
+                    "index": 0,
+                    "voucher": "CHAOS0123",
+                    "owner": None,
+                    "offered_to": [
+                        {
+                            "username": "alice",
+                            "offered_at": now.isoformat(),
+                            "message_id": 101,
+                        }
+                    ],
+                    "message_id": None,
+                    "history": [],
+                },
+                {
+                    "index": 1,
+                    "voucher": "CHAOS4567",
+                    "owner": None,
+                    "offered_to": [],
+                    "message_id": None,
+                    "history": [],
+                },
+            ],
+            "voucher_topics": {"40C3": 999},
+        },
+    )
+
+    with freezegun.freeze_time("2026-10-15T12:05:00+00:00"):
+        process_voucher_distribution(dummy_storage_client)
+        expected_offered_at = datetime.now(pytz.timezone("Europe/Berlin"))
+
+    # Only one NEW offer should be made
+    assert len(dummy_storage_client.create_post.call_args_list) == 1
+    pm_call = dummy_storage_client.create_post.call_args_list[0]
+
+    # It should be for Bob, not Alice, because Alice already has a pending offer
+    assert pm_call.kwargs["target_recipients"] == "bob"
+
+    # Verify storage
+    final_storage = dummy_storage_client.storage.get("voucher")
+    # Alice still has her offer for Voucher 0
+    assert final_storage["voucher"][0]["offered_to"][0]["username"] == "alice"
+    # Bob now has an offer for Voucher 1
+    assert final_storage["voucher"][1]["offered_to"] == [
+        {"username": "bob", "offered_at": expected_offered_at.isoformat()}
+    ]
