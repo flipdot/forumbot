@@ -64,7 +64,7 @@ Wir haben {{ vouchers | length }} Voucher zur Verfügung! Hier sind sie:
 | Voucher | Aktuell bei | erhalten | Für n Personen |
 |---------|-------------|----------|----------------|
 {% for voucher in vouchers -%}
-| #{{ loop.index }} | @{{ voucher.owner or bot_name }} | {{ voucher.received_at.strftime("%Y-%m-%d %H:%M") }} | {{ voucher.persons or '' }} |
+| #{{ loop.index }} | {% if voucher.owner %}@{{ voucher.owner }}{% elif voucher.offered_to %}Wartet auf @{{ voucher.offered_to[-1].username }}{% else %}@{{ bot_name }}{% endif %} | {{ voucher.received_at.strftime("%Y-%m-%d %H:%M") if voucher.received_at else '' }} | {{ voucher.persons or '' }} |
 {% endfor %}
 
 Du bist oben in der Liste? Dann hast du eine PN von mir bekommen! **Bitte kaufe schnellstmöglich deine Tickets!** https://tickets.events.ccc.de/

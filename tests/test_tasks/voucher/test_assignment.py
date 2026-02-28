@@ -58,7 +58,11 @@ def test_offer_is_made(mocker, dummy_storage_client):
                 "voucher": "CHAOS123",
                 "owner": None,
                 "offered_to": [
-                    {"username": "alice", "offered_at": expected_offered_at.isoformat()}
+                    {
+                        "username": "alice",
+                        "offered_at": expected_offered_at.isoformat(),
+                        "message_id": 123,
+                    }
                 ],
                 "message_id": None,
                 "history": [],
@@ -105,7 +109,11 @@ def test_voucher_offer_escalation_in_queue(mocker, dummy_storage_client):
 
     storage = dummy_storage_client.storage.get("voucher")
     assert storage["voucher"][0]["offered_to"] == [
-        {"username": "alice", "offered_at": t0_offered_at.isoformat()}
+        {
+            "username": "alice",
+            "offered_at": t0_offered_at.isoformat(),
+            "message_id": 456,
+        }
     ]
     assert storage["queue"] == ["alice", "charlie", "bob"]
 
@@ -131,8 +139,16 @@ def test_voucher_offer_escalation_in_queue(mocker, dummy_storage_client):
 
     final_storage = dummy_storage_client.storage.get("voucher")
     assert final_storage["voucher"][0]["offered_to"] == [
-        {"username": "alice", "offered_at": t0_offered_at.isoformat()},
-        {"username": "charlie", "offered_at": t1_offered_at.isoformat()},
+        {
+            "username": "alice",
+            "offered_at": t0_offered_at.isoformat(),
+            "message_id": 456,
+        },
+        {
+            "username": "charlie",
+            "offered_at": t1_offered_at.isoformat(),
+            "message_id": 456,
+        },
     ]
     assert final_storage["queue"] == ["alice", "charlie", "bob"]
 
@@ -198,7 +214,7 @@ def test_voucher_acceptance(mocker, dummy_storage_client):
         if c.kwargs.get("topic_id") == 101
     ][0]
     assert "CHAOS123" in alice_call.args[0]
-    assert "http://tickets.events.ccc.de/" in alice_call.args[0]
+    assert "https://tickets.events.ccc.de" in alice_call.args[0]
 
     # Check Bob's message (he should get the expired message)
     bob_call = [
@@ -396,5 +412,77 @@ def test_skip_user_with_pending_offer(mocker, dummy_storage_client):
     assert final_storage["voucher"][0]["offered_to"][0]["username"] == "alice"
     # Bob now has an offer for Voucher 1
     assert final_storage["voucher"][1]["offered_to"] == [
-        {"username": "bob", "offered_at": expected_offered_at.isoformat()}
+        {
+            "username": "bob",
+            "offered_at": expected_offered_at.isoformat(),
+            "message_id": 789,
+        }
+    ]
+
+
+def test_offer_to_existing_owner(mocker, dummy_storage_client, responses):
+    mocker.patch.object(
+        dummy_storage_client, "create_post", return_value={"topic_id": 789}
+    )
+
+    # Mock the response for checking returned vouchers for topic 101
+    responses.add(
+        responses.GET,
+        "https://discourse.example.com/t/101/posts.json",
+        body='{"post_stream": {"posts": []}}',
+        status=200,
+        content_type="application/json; charset=utf-8",
+    )
+
+    now = datetime(2026, 10, 15, 12, 0, 0, tzinfo=pytz.timezone("Europe/Berlin"))
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {},
+            "queue": ["alice"],
+            "voucher": [
+                {
+                    "index": 0,
+                    "voucher": "CHAOS0815",
+                    "owner": "alice",
+                    "offered_to": [],
+                    "message_id": 101,
+                    "history": [
+                        {
+                            "username": "alice",
+                            "received_at": (now + timedelta(hours=4)).isoformat(),
+                        }
+                    ],
+                },
+                {
+                    "index": 1,
+                    "voucher": "CHAOS1337",
+                    "owner": None,
+                    "offered_to": [],
+                    "message_id": None,
+                    "history": [],
+                },
+            ],
+            "voucher_topics": {"40C3": 999},
+        },
+    )
+
+    with freezegun.freeze_time("2026-10-15T12:05:00+00:00"):
+        process_voucher_distribution(dummy_storage_client)
+        expected_offered_at = datetime.now(pytz.timezone("Europe/Berlin"))
+
+    # Alice should receive an offer for Voucher 1, even though she owns Voucher 0
+    assert len(dummy_storage_client.create_post.call_args_list) == 1
+    pm_call = dummy_storage_client.create_post.call_args_list[0]
+    assert pm_call.kwargs["target_recipients"] == "alice"
+
+    # Verify storage
+    final_storage = dummy_storage_client.storage.get("voucher")
+    assert final_storage["voucher"][1]["offered_to"] == [
+        {
+            "username": "alice",
+            "offered_at": expected_offered_at.isoformat(),
+            "message_id": 789,
+        }
     ]

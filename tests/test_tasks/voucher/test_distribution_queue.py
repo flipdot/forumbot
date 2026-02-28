@@ -50,34 +50,49 @@ def test_voucher_demand_and_queue_generation(dummy_storage_client, mocker):
 
     assert dummy_storage_client.storage.get("voucher") == {
         "demand": {"alice": 3, "bob": 2, "charlie": 1, "dan": 0},
-        "queue": ["alice"],
+        "queue": ["charlie", "bob", "dan", "alice"],
         "voucher": [
             {
                 "index": 0,
                 "voucher": "CHAOS1",
-                "owner": "charlie",
-                "message_id": 123,
-                "history": [{"received_at": mocker.ANY, "username": "charlie"}],
-                "received_at": mocker.ANY,
-                "retry_counter": mocker.ANY,
+                "owner": None,
+                "message_id": None,
+                "history": [],
+                "offered_to": [
+                    {
+                        "username": "charlie",
+                        "offered_at": mocker.ANY,
+                        "message_id": 123,
+                    }
+                ],
             },
             {
                 "index": 1,
                 "voucher": "CHAOS2",
-                "owner": "bob",
-                "message_id": 123,
-                "history": [{"received_at": mocker.ANY, "username": "bob"}],
-                "received_at": mocker.ANY,
-                "retry_counter": mocker.ANY,
+                "owner": None,
+                "message_id": None,
+                "history": [],
+                "offered_to": [
+                    {
+                        "username": "bob",
+                        "offered_at": mocker.ANY,
+                        "message_id": 123,
+                    }
+                ],
             },
             {
                 "index": 2,
                 "voucher": "CHAOS3",
-                "owner": "dan",
-                "message_id": 123,
-                "history": [{"received_at": mocker.ANY, "username": "dan"}],
-                "received_at": mocker.ANY,
-                "retry_counter": mocker.ANY,
+                "owner": None,
+                "message_id": None,
+                "history": [],
+                "offered_to": [
+                    {
+                        "username": "dan",
+                        "offered_at": mocker.ANY,
+                        "message_id": 123,
+                    }
+                ],
             },
         ],
     }
