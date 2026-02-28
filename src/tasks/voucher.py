@@ -589,6 +589,9 @@ def render_post_content(data: dict) -> str:
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
+        format_voucher_offers=lambda offers: ", ".join(
+            [f"@{offer['username']}" for offer in offers]
+        ),
         queue=queue,
         demand_list=demand_list,
         total_persons_in_queue=(sum(demand.values()) + len(queue)),
