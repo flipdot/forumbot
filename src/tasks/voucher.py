@@ -317,8 +317,9 @@ def private_message_handler(client: DiscourseStorageClient, topic, posts) -> boo
 
         # Award the voucher
         voucher_to_award["owner"] = username
-        # Removal from queue is needed
-        data["queue"] = [u for u in data.get("queue", []) if u != username]
+        # Removal from queue is needed: only remove ONE occurrence
+        if username in data.get("queue", []):
+            data["queue"].remove(username)
 
         # Send voucher code to THIS topic
         send_voucher_to_user(client, voucher_to_award, topic_id=topic_id)
