@@ -286,3 +286,54 @@ def test_voucher_acceptance_race_condition(mocker, dummy_storage_client):
     assert final_storage["voucher"][0]["owner"] in ["alice", "bob"]
     # And the queue should have the other person
     assert len(final_storage["queue"]) == 1
+
+
+def test_voucher_acceptance_only_if_offered(mocker, dummy_storage_client):
+    mocker.patch.object(dummy_storage_client, "create_post")
+
+    now = datetime(2026, 10, 15, 12, 0, 0, tzinfo=pytz.timezone("Europe/Berlin"))
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {},
+            "queue": ["alice", "bob"],
+            "voucher": [
+                {
+                    "index": 0,
+                    "voucher": "CHAOS123",
+                    "owner": None,
+                    "offered_to": [
+                        {
+                            "username": "alice",
+                            "offered_at": now.isoformat(),
+                            "message_id": 101,
+                        }
+                    ],
+                    "message_id": None,
+                    "history": [],
+                }
+            ],
+            "voucher_topics": {"40C3": 999},
+        },
+    )
+
+    # Bob is in queue, but NO offer was made to him.
+    # He tries to accept anyway via PM
+    topic_bob = {"id": 102, "title": "Some other PM"}
+    posts_bob = {
+        "post_stream": {
+            "posts": [{"username": "bob", "cooked": "VOUCHER_JETZT_EINLOESEN"}]
+        }
+    }
+
+    accepted = private_message_handler(dummy_storage_client, topic_bob, posts_bob)
+
+    # It should not be handled/accepted
+    assert accepted is False
+
+    # Storage remains unchanged
+    final_storage = dummy_storage_client.storage.get("voucher")
+    assert final_storage["voucher"][0]["owner"] is None
+    assert final_storage["queue"] == ["alice", "bob"]
+    assert len(dummy_storage_client.create_post.call_args_list) == 0
