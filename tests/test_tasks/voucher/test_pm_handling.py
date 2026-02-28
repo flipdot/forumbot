@@ -138,16 +138,18 @@ def test_handle_returned_voucher(dummy_storage_client, mocker):
 
 
 def test_only_first_queue_entry_removed_on_acceptance(dummy_storage_client, mocker):
-    # Mock network calls in tasks/voucher.py that would fail
     mocker.patch("tasks.voucher.send_voucher_to_user")
     mocker.patch("tasks.voucher.update_history_image")
     dummy_storage_client.create_post = mocker.Mock()
 
     # Setup: User 'alice' is in the queue twice.
-    # She has an offer for voucher 'V1'.
+    # She has an offer for voucher 'CHAOS4680'.
     data = {
         "voucher": [
-            {"voucher": "V1", "offered_to": [{"username": "alice", "message_id": 123}]}
+            {
+                "voucher": "CHAOS4680",
+                "offered_to": [{"username": "alice", "message_id": 123}],
+            }
         ],
         "queue": ["alice", "bob", "alice", "charlie"],
     }
@@ -161,10 +163,8 @@ def test_only_first_queue_entry_removed_on_acceptance(dummy_storage_client, mock
         }
     }
 
-    # Execute
     res = private_message_handler(dummy_storage_client, topic, posts)
 
-    # Verify
     assert res is True
     updated_data = dummy_storage_client.storage.get("voucher")
 
@@ -182,7 +182,7 @@ def test_offered_to_cleared_on_acceptance(dummy_storage_client, mocker):
     data = {
         "voucher": [
             {
-                "voucher": "V1",
+                "voucher": "CHAOS4680",
                 "offered_to": [
                     {"username": "alice", "message_id": 123},
                     {"username": "bob", "message_id": 456},
