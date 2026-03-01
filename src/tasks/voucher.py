@@ -287,6 +287,54 @@ def handle_private_message_voucher_exhausted_at(
 
 def private_message_handler(client: DiscourseStorageClient, topic, posts) -> bool:
     posts_content = posts["post_stream"]["posts"][-1]["cooked"]
+    username = posts["post_stream"]["posts"][-1]["username"]
+    topic_id = topic["id"]
+
+    if "VOUCHER_JETZT_EINLOESEN" in posts_content:
+        data = client.storage.get("voucher")
+
+        # Find if this topic belongs to an offer
+        voucher_to_award = None
+        for voucher in data.get("voucher", []):
+            for offer in voucher.get("offered_to", []):
+                if offer["message_id"] == topic_id and offer["username"] == username:
+                    voucher_to_award = voucher
+                    break
+            if voucher_to_award:
+                break
+
+        if not voucher_to_award:
+            # User sent the trigger in a random thread or they were not offered THIS voucher
+            return False
+
+        if voucher_to_award.get("owner"):
+            # Voucher already gone (someone else accepted faster)
+            client.create_post(
+                "Dein Voucher ist ausgelaufen. Du erhältst eine Nachricht, wenn wieder ein Voucher verfügbar ist",
+                topic_id=topic_id,
+            )
+            return True
+
+        # Award the voucher
+        voucher_to_award["owner"] = username
+        # Removal from queue is needed: only remove ONE occurrence
+        if username in data.get("queue", []):
+            data["queue"].remove(username)
+
+        # Send voucher code to THIS topic
+        send_voucher_to_user(client, voucher_to_award, topic_id=topic_id)
+
+        # Notify other people who had offers for this voucher
+        for offer in voucher_to_award.get("offered_to", []):
+            if offer["username"] != username:
+                client.create_post(
+                    "Dein Voucher ist ausgelaufen. Du erhältst eine Nachricht, wenn wieder ein Voucher verfügbar ist",
+                    topic_id=offer["message_id"],
+                )
+
+        voucher_to_award["offered_to"] = []
+        client.storage.put("voucher", data)
+        return True
 
     bedarf_strings = ["voucher-bedarf", "voucherbedarf", "voucher bedarf"]
 
@@ -376,7 +424,11 @@ def encode_voucher_identifier(index: int, history_length: int, congress_id: str)
     return f"{congress_id.lower()}-{encoded}"
 
 
-def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement):
+def send_voucher_to_user(
+    client: DiscourseClient,
+    voucher: VoucherConfigElement,
+    topic_id: Optional[int] = None,
+):
     if voucher["message_id"]:
         raise ValueError("Voucher already sent")
     username = voucher["owner"]
@@ -391,13 +443,21 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
         voucher_ingress_email=voucher_ingress_email,
     )
     logging.info(f"Sending voucher to {username}")
-    res = client.create_post(
-        message_content,
-        title=f"Dein {get_congress_id()} Voucher",
-        archetype="private_message",
-        target_recipients=username,
-    )
-    message_id = res.get("topic_id")
+    if topic_id:
+        client.create_post(
+            message_content,
+            topic_id=topic_id,
+        )
+        message_id = topic_id
+    else:
+        res = client.create_post(
+            message_content,
+            title=f"Dein {get_congress_id()} Voucher",
+            archetype="private_message",
+            target_recipients=username,
+        )
+        message_id = res.get("topic_id")
+
     logging.info(f"Sent, message_id is {message_id}")
     voucher["message_id"] = message_id
     now = datetime.now(pytz.timezone("Europe/Berlin"))
@@ -406,6 +466,30 @@ def send_voucher_to_user(client: DiscourseClient, voucher: VoucherConfigElement)
         {
             "username": voucher["owner"],
             "received_at": now.isoformat(),
+        }
+    )
+
+
+def send_offer_to_user(
+    client: DiscourseStorageClient, voucher: VoucherConfigElement, username: str
+):
+    message_content = render("voucher_offer.md")
+    logging.info(f"Offering voucher to {username}")
+    res = client.create_post(
+        message_content,
+        title=f"Dein {get_congress_id()} Voucher",
+        archetype="private_message",
+        target_recipients=username,
+    )
+    message_id = res.get("topic_id")
+    logging.info(f"Offer sent, message_id is {message_id}")
+
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
+    voucher.setdefault("offered_to", []).append(
+        {
+            "username": username,
+            "offered_at": now.isoformat(),
+            "message_id": message_id,
         }
     )
 
@@ -505,6 +589,9 @@ def render_post_content(data: dict) -> str:
     return render(
         "voucher_announcement.md",
         vouchers=vouchers,
+        format_voucher_offers=lambda offers: ", ".join(
+            [f"@{offer['username']}" for offer in offers]
+        ),
         queue=queue,
         demand_list=demand_list,
         total_persons_in_queue=(sum(demand.values()) + len(queue)),
@@ -519,6 +606,14 @@ def render_post_content(data: dict) -> str:
 
 def process_voucher_distribution(client: DiscourseStorageClient):
     data = client.storage.get("voucher", {"voucher": [], "queue": [], "demand": {}})
+    now = datetime.now(pytz.timezone("Europe/Berlin"))
+
+    # Track who already has an active offer to avoid offering them multiple vouchers
+    all_offered_users = set()
+    for v in data.get("voucher", []):
+        for offer in v.get("offered_to", []):
+            all_offered_users.add(offer["username"])
+
     for voucher in data.get("voucher", []):
         if voucher.get("message_id"):
             # The voucher is already assigned to someone. Check if they returned it
@@ -539,28 +634,53 @@ def process_voucher_distribution(client: DiscourseStorageClient):
                 voucher["history"][-1]["returned_at"] = now.isoformat()
                 voucher["received_at"] = now
 
-        if not voucher["owner"]:
-            # The voucher is available. Assign it to the next person in the queue
-            if not data.get("queue"):
-                # If the queue is empty, we will extend it, by putting each person who has n > 0
-                # in the demand dictionary once into the list (in random order)
-                demand = data.setdefault("demand", {})
-                potential_recipients = [
-                    name for name, count in demand.items() if count > 0
-                ]
-                if potential_recipients:
+        if not voucher.get("owner"):
+            # Check for active offers on this voucher
+            offered_to = voucher.get("offered_to", [])
+            last_offer = offered_to[-1] if offered_to else None
+
+            needs_new_offer = False
+            if not last_offer:
+                needs_new_offer = True
+            else:
+                offered_at = datetime.fromisoformat(
+                    last_offer["offered_at"]
+                ).astimezone(pytz.timezone("Europe/Berlin"))
+                if now - offered_at > timedelta(hours=3):
+                    needs_new_offer = True
+
+            if needs_new_offer:
+                next_recipient = None
+                # Try to find a recipient in the existing queue; if none found, replenish from demand and try once more.
+                for _ in range(2):
+                    for user in data.get("queue", []):
+                        if user not in all_offered_users:
+                            next_recipient = user
+                            break
+
+                    if next_recipient:
+                        break
+
+                    # No recipient found in current queue, replenish from demand
+                    demand = data.setdefault("demand", {})
+                    potential_recipients = [
+                        name for name, count in demand.items() if count > 0
+                    ]
+                    if not potential_recipients:
+                        break  # No more demand to replenish from
+
                     random.shuffle(potential_recipients)
-                    data["queue"] = potential_recipients
+                    data.setdefault("queue", []).extend(potential_recipients)
                     for name in potential_recipients:
                         demand[name] -= 1
+                    # Continue to second iteration to find recipient in the replenished queue
 
-            if data.get("queue"):
-                next_user = data["queue"].pop(0)
-                voucher["owner"] = next_user
-                voucher["retry_counter"] = 0
+                if next_recipient:
+                    send_offer_to_user(client, voucher, next_recipient)
+                    all_offered_users.add(next_recipient)
 
-        if not voucher.get("message_id") and voucher["owner"]:
-            # Voucher was assigned to someone but they haven't received it yet
+        # Legacy sending (still needed for when a voucher is finally accepted)
+        if not voucher.get("message_id") and voucher.get("owner"):
             try:
                 send_voucher_to_user(client, voucher)
             except DiscourseClientError:
