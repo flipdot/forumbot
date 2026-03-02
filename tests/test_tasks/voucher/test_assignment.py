@@ -52,6 +52,7 @@ def test_offer_is_made(mocker, dummy_storage_client):
     assert dummy_storage_client.storage.get("voucher") == {
         "demand": {"alice": 0},
         "queue": ["alice"],
+        "penalty": {},
         "voucher": [
             {
                 "index": 0,

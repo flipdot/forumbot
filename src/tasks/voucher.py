@@ -670,9 +670,15 @@ def process_voucher_distribution(client: DiscourseStorageClient):
                         break  # No more demand to replenish from
 
                     random.shuffle(potential_recipients)
-                    data.setdefault("queue", []).extend(potential_recipients)
+                    penalties = data.setdefault("penalty", {})
+                    queue = data.setdefault("queue", [])
                     for name in potential_recipients:
-                        demand[name] -= 1
+                        penalty_count = penalties.get(name, 0)
+                        if penalty_count > 0:
+                            penalties[name] = penalty_count - 1
+                        else:
+                            queue.append(name)
+                            demand[name] -= 1
                     # Continue to second iteration to find recipient in the replenished queue
 
                 if next_recipient:

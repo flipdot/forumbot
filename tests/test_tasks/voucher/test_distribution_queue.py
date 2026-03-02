@@ -51,6 +51,7 @@ def test_voucher_demand_and_queue_generation(dummy_storage_client, mocker):
     assert dummy_storage_client.storage.get("voucher") == {
         "demand": {"alice": 3, "bob": 2, "charlie": 1, "dan": 0},
         "queue": ["charlie", "bob", "dan", "alice"],
+        "penalty": {},
         "voucher": [
             {
                 "index": 0,
