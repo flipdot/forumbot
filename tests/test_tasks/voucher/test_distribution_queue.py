@@ -224,3 +224,36 @@ def test_penalty_at_zero_allows_queue_addition(dummy_storage_client, mocker):
     assert data["demand"]["alice"] == 0
     assert data["queue"] == ["alice"]
     assert data["voucher"][0]["offered_to"][0]["username"] == "alice"
+
+
+def test_penalty_decrement_doesnt_update_global_penalty(dummy_storage_client, mocker):
+    mocker.patch.object(
+        dummy_storage_client, "create_post", return_value={"topic_id": 123}
+    )
+    mocker.patch("tasks.voucher.check_for_returned_voucher", return_value=None)
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {"alice": 1},
+            "queue": [],
+            "penalty": {"alice": 1},
+            "global_penalty": {"alice": 1},
+            "voucher": [
+                {
+                    "index": 0,
+                    "voucher": "V1",
+                    "owner": None,
+                    "message_id": None,
+                    "history": [],
+                }
+            ],
+        },
+    )
+
+    process_voucher_distribution(dummy_storage_client)
+
+    data = dummy_storage_client.storage.get("voucher")
+    assert data["penalty"]["alice"] == 0
+    # Global penalty should NOT be changed at runtime
+    assert data["global_penalty"]["alice"] == 1

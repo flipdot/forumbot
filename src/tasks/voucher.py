@@ -541,6 +541,7 @@ def create_voucher_topic(
     data["voucher"] = []
     data["queue"] = []
     data["demand"] = {}
+    data["penalty"] = data.get("global_penalty", {}).copy()
     data["total_persons_reported"] = None
     if "voucher_topics" not in data:
         data["voucher_topics"] = {}
