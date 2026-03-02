@@ -118,3 +118,108 @@ def test_render_post_content_logic(mocker):
     ]
     assert kwargs["queue"] == ["dan"]
     assert kwargs["total_persons_in_queue"] == 4  # 2+1 from demand + 1 from queue
+
+
+def test_penalty_no_vouchers_no_reduction(dummy_storage_client, mocker):
+    """
+    If there are no vouchers, the replenishment logic should not be triggered,
+    and thus no penalties should be reduced.
+    """
+    mocker.patch.object(dummy_storage_client, "create_post")
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {"alice": 1},
+            "queue": [],
+            "penalty": {"alice": 1},
+            "voucher": [],
+        },
+    )
+
+    process_voucher_distribution(dummy_storage_client)
+
+    data = dummy_storage_client.storage.get("voucher")
+    assert data["penalty"]["alice"] == 1
+    assert data["demand"]["alice"] == 1
+    assert data["queue"] == []
+
+
+def test_penalty_skips_queue_addition_and_reduces_penalty(dummy_storage_client, mocker):
+    """
+    When a user with penalty > 0 is drawn from demand, their penalty is reduced,
+    but they are not added to the queue and their demand remains unchanged.
+    """
+    mocker.patch.object(
+        dummy_storage_client, "create_post", return_value={"topic_id": 123}
+    )
+    mocker.patch("tasks.voucher.check_for_returned_voucher", return_value=None)
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {"alice": 1, "bob": 1, "charlie": 1},
+            "queue": [],
+            "penalty": {"alice": 1, "bob": 0},
+            "voucher": [
+                {
+                    "index": 0,
+                    "voucher": "V1",
+                    "owner": None,
+                    "message_id": None,
+                    "history": [],
+                }
+            ],
+        },
+    )
+
+    process_voucher_distribution(dummy_storage_client)
+
+    data = dummy_storage_client.storage.get("voucher")
+    # Alice's penalty should be reduced by 1.
+    assert data["penalty"] == {"alice": 0, "bob": 0}
+    # Alice should not be added to the queue
+    assert data["queue"] == ["bob", "charlie"]
+    # Alice's demand should remain unchanged
+    assert data["demand"] == {
+        "alice": 1,
+        "bob": 0,
+        "charlie": 0,
+    }
+
+
+def test_penalty_at_zero_allows_queue_addition(dummy_storage_client, mocker):
+    """
+    When a user's penalty is 0, they should be added to the queue as normal,
+    and their demand should be decreased.
+    """
+    mocker.patch.object(
+        dummy_storage_client, "create_post", return_value={"topic_id": 123}
+    )
+    mocker.patch("tasks.voucher.check_for_returned_voucher", return_value=None)
+
+    dummy_storage_client.storage.put(
+        "voucher",
+        {
+            "demand": {"alice": 1},
+            "queue": [],
+            "penalty": {"alice": 0},
+            "voucher": [
+                {
+                    "index": 0,
+                    "voucher": "V1",
+                    "owner": None,
+                    "message_id": None,
+                    "history": [],
+                }
+            ],
+        },
+    )
+
+    process_voucher_distribution(dummy_storage_client)
+
+    data = dummy_storage_client.storage.get("voucher")
+    assert data["penalty"]["alice"] == 0
+    assert data["demand"]["alice"] == 0
+    assert data["queue"] == ["alice"]
+    assert data["voucher"][0]["offered_to"][0]["username"] == "alice"
