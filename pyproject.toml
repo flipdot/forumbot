@@ -15,7 +15,7 @@ dependencies = [
     "mistune==2.0.0.rc1",
     "MarkupSafe>=3.0.2,<4",
     "python-dateutil>=2.9.0.post0,<3",
-    "python-dotenv>=1.0.1,<2",
+    "python-dotenv>=1.2.2,<2",
     "sentry-sdk>=2.17.0,<3",
     "pytest>=8.3.3,<9",
     "babel>=2.16.0,<3",
