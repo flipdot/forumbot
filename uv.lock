@@ -170,7 +170,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.4,<4" },
     { name = "markupsafe", specifier = ">=3.0.2,<4" },
     { name = "matplotlib", specifier = ">=3.9.2,<4" },
-    { name = "mistune", specifier = "==2.0.0rc1" },
+    { name = "mistune", specifier = "==3.2.1" },
     { name = "numpy", specifier = ">=2.1.2,<3" },
     { name = "pandas", specifier = ">=2.2.3,<3" },
     { name = "pydiscourse", specifier = "==1.1.1" },
@@ -327,11 +327,11 @@ wheels = [
 
 [[package]]
 name = "mistune"
-version = "2.0.0rc1"
+version = "3.2.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2d/de/2fc9c6825e5fc0e57522e4ee780dbae5b2f902731e36a5f5fe9ef1f668c2/mistune-2.0.0rc1.tar.gz", hash = "sha256:452bdba97c27efc7c1a83823ed0d6a08a9ad6ea5c67648248509f618b68aa7d9", size = 72515, upload-time = "2021-02-16T08:18:37.666Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/84/620cc3f7e3adf6f5067e10f4dbae71295d8f9e16d5d3f9ef97c40f2f592c/mistune-3.2.1.tar.gz", hash = "sha256:7c8e5501d38bac1582e067e46c8343f17d57ea1aaa735823f3aba1fd59c88a28", size = 98003, upload-time = "2026-05-03T14:33:22.312Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/b9/3b456512e1d31e9c32459f7466304e98c603bd18b473f047d3887e21a79a/mistune-2.0.0rc1-py2.py3-none-any.whl", hash = "sha256:02437870a8d594e61e4f6cff2f56f5104d17d56e3fea5fb234070ede5e7c2eae", size = 23232, upload-time = "2021-02-16T08:18:36.126Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/7f/a946aa4f8752b37102b41e64dca18a1976ac705c3a0d1dfe74d820a02552/mistune-3.2.1-py3-none-any.whl", hash = "sha256:78cdb0ba5e938053ccf63651b352508d2efa9411dc8810bfb05f2dc5140c0048", size = 53749, upload-time = "2026-05-03T14:33:20.551Z" },
 ]
 
 [[package]]
