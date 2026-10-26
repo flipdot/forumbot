@@ -21,7 +21,9 @@ def iterate_sections(obj, indices):
 
 
 def parse_protocol(protocol):
-    protocol_parsed = mistune.Markdown()(protocol)
+    # renderer=None makes Markdown() return the token tree instead of rendering
+    # (it is also the v3 default, but passed explicitly to document intent)
+    protocol_parsed = mistune.Markdown(renderer=None)(protocol)
     h2_indices = np.where(
         [x["type"] == "heading" and x["attrs"]["level"] == 2 for x in protocol_parsed]
     )[0]
@@ -35,6 +37,8 @@ def parse_protocol(protocol):
             [x["type"] == "heading" and x["attrs"]["level"] == 3 for x in section]
         )[0]
         for topic in iterate_sections(section, topic_indices):
+            # v3 returns the full heading in one text node; cut at "[" to drop
+            # the author/duration annotation, as v2's first node ended there
             title = topic[0]["children"][0]["raw"].split("[")[0].strip()
             if "Vorstellungsrunde" in title:
                 continue
