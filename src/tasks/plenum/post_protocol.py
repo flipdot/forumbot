@@ -21,24 +21,24 @@ def iterate_sections(obj, indices):
 
 
 def parse_protocol(protocol):
-    protocol_parsed = mistune.Markdown(mistune.AstRenderer()).parse(protocol)
+    protocol_parsed = mistune.Markdown()(protocol)
     h2_indices = np.where(
-        [x["type"] == "heading" and x["level"] == 2 for x in protocol_parsed]
+        [x["type"] == "heading" and x["attrs"]["level"] == 2 for x in protocol_parsed]
     )[0]
 
     result = {"topics": []}
     for section in iterate_sections(protocol_parsed, h2_indices):
-        section_name = section[0]["children"][0]["text"]
+        section_name = section[0]["children"][0]["raw"]
         if section_name != "Tagesordnungspunkte":
             continue
         topic_indices = np.where(
-            [x["type"] == "heading" and x["level"] == 3 for x in section]
+            [x["type"] == "heading" and x["attrs"]["level"] == 3 for x in section]
         )[0]
         for topic in iterate_sections(section, topic_indices):
-            title = topic[0]["children"][0]["text"].strip()
+            title = topic[0]["children"][0]["raw"].split("[")[0].strip()
             if "Vorstellungsrunde" in title:
                 continue
-            title_text = " ".join([x["text"] for x in topic[0]["children"]])
+            title_text = " ".join([x["raw"] for x in topic[0]["children"]])
             author_match = re.search(r"@(.+)?\]", title_text)
             if author_match:
                 author = author_match.groups()[0]
